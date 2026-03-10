@@ -124,8 +124,8 @@ export function TaskCard({
 
           {/* Task Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className={`text-lg font-bold transition-opacity ${isCompleted ? 'opacity-60' : ''}`}>
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <h3 className={`text-lg font-bold transition-opacity break-words line-clamp-2 min-w-0 ${isCompleted ? 'opacity-60' : ''}`}>
                 {habit.title}
               </h3>
               {habit.isBadHabit && (
@@ -151,7 +151,7 @@ export function TaskCard({
               )}
             </div>
             {habit.description && (
-              <p className="text-sm text-foreground/60 mt-1">{habit.description}</p>
+              <p className="text-sm text-foreground/60 mt-1 break-words line-clamp-3 min-w-0">{habit.description}</p>
             )}
             {(habit.reminderAt || habit.dueDate || (habit.recurrence === 'custom' && habit.customDueDateTime)) && (
               <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-foreground/60">
@@ -178,7 +178,7 @@ export function TaskCard({
                   })}
                 </span>
                 {todayCompletion.notes && (
-                  <span className="text-foreground/60 italic">"{todayCompletion.notes}"</span>
+                  <span className="text-foreground/60 italic min-w-0 truncate max-w-full" title={todayCompletion.notes}>"{todayCompletion.notes}"</span>
                 )}
                 {todayCompletion.proofImageUrl && (
                   <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded bg-muted text-foreground/70" title="Proof attached" aria-label="Proof attached">

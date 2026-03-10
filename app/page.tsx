@@ -175,15 +175,15 @@ export default function Home() {
   // Dashboard View
   if (view === 'dashboard') {
     return (
-      <div className={`min-h-screen pb-24 ${showBadHabitsOnly ? 'bg-neutral-900 text-neutral-100' : 'bg-background'}`}>
+      <div className={`min-h-screen pb-[calc(6rem+env(safe-area-inset-bottom,0px))] ${showBadHabitsOnly ? 'bg-neutral-900 text-neutral-100' : 'bg-background'}`}>
         <AchievementToast 
           achievement={currentAchievement}
           onComplete={() => setCurrentAchievement(null)}
         />
         {/* Header: title + compact status bar */}
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
-          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-            <div>
+          <div className="max-w-2xl mx-auto min-w-0 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="min-w-0">
               <h1 className="text-3xl font-black text-foreground">LockIn Pro</h1>
               <p className="text-sm text-foreground/60 mt-1">
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
@@ -297,7 +297,7 @@ export default function Home() {
                     )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72" align="end">
+                <PopoverContent className="w-72 max-w-[calc(100vw-2rem)]" align="end">
                 <div className="space-y-4">
                   <h4 className="font-semibold text-sm">Dashboard filters</h4>
                   <div className="flex items-center justify-between gap-2">
@@ -465,7 +465,7 @@ export default function Home() {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -526,7 +526,7 @@ export default function Home() {
   // Quest Path View
   if (view === 'quest') {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom,0px))]">
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-black text-foreground">Quest Path</h1>
@@ -565,7 +565,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -594,7 +594,7 @@ export default function Home() {
   // Calendar View
   if (view === 'calendar') {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom,0px))]">
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <h1 className="text-3xl font-black text-foreground">Progress</h1>
@@ -617,10 +617,10 @@ export default function Home() {
         <div className="max-w-2xl mx-auto px-4 py-6 animate-in fade-in duration-300">
           {selectedHabit ? (
             <div className="space-y-6">
-              <div className="bg-card rounded-3xl p-6 shadow-sm border-2 border-primary/20">
-                <h2 className="text-2xl font-bold">{selectedHabit.title}</h2>
+              <div className="bg-card rounded-3xl p-6 shadow-sm border-2 border-primary/20 min-w-0">
+                <h2 className="text-2xl font-bold break-words line-clamp-2">{selectedHabit.title}</h2>
                 {selectedHabit.description && (
-                  <p className="text-muted-foreground mt-2">{selectedHabit.description}</p>
+                  <p className="text-muted-foreground mt-2 break-words line-clamp-3 min-w-0">{selectedHabit.description}</p>
                 )}
               </div>
               <HabitCalendar habit={selectedHabit} />
@@ -637,8 +637,8 @@ export default function Home() {
                     onClick={() => setSelectedHabit(habit)}
                     className="w-full justify-start h-auto py-4 rounded-3xl border-2 border-primary/20 hover:border-primary/50 transition-all active:scale-[0.98]"
                   >
-                    <div className="text-left w-full">
-                      <h3 className="font-bold text-lg">{habit.title}</h3>
+                    <div className="text-left w-full min-w-0">
+                      <h3 className="font-bold text-lg break-words line-clamp-2">{habit.title}</h3>
                       <p className="text-sm text-muted-foreground">
                         {habit.completions.length} completions
                       </p>
@@ -650,7 +650,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -679,7 +679,7 @@ export default function Home() {
   // Stats View
   if (view === 'stats') {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom,0px))]">
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-black text-foreground">Statistics</h1>
@@ -713,9 +713,9 @@ export default function Home() {
                 
                 return (
                   <div key={habit.id}>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-semibold">{habit.title}</span>
-                      <span className="text-sm text-foreground/60">{completion}%</span>
+                    <div className="flex justify-between mb-1 gap-2 min-w-0">
+                      <span className="font-semibold break-words line-clamp-1 min-w-0">{habit.title}</span>
+                      <span className="text-sm text-foreground/60 shrink-0">{completion}%</span>
                     </div>
                     <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                       <div
@@ -750,7 +750,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -779,7 +779,7 @@ export default function Home() {
   // Manage Habits View
   if (view === 'manage') {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className="min-h-screen bg-background pb-[calc(6rem+env(safe-area-inset-bottom,0px))]">
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-black text-foreground">Manage Habits</h1>
@@ -801,15 +801,15 @@ export default function Home() {
             </div>
           ) : (
             appData.habits.map(habit => (
-              <div key={habit.id} className="bg-card rounded-3xl p-4 shadow-sm border-2 border-primary/20 transition-shadow hover:shadow-md">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-bold text-lg">{habit.title}</h3>
+              <div key={habit.id} className="bg-card rounded-3xl p-4 shadow-sm border-2 border-primary/20 transition-shadow hover:shadow-md min-w-0">
+                <div className="flex items-start justify-between mb-3 gap-2 min-w-0">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-lg break-words line-clamp-2">{habit.title}</h3>
                     {habit.description && (
-                      <p className="text-sm text-muted-foreground">{habit.description}</p>
+                      <p className="text-sm text-muted-foreground break-words line-clamp-2 min-w-0">{habit.description}</p>
                     )}
                   </div>
-                  <span className="text-2xl">+{habit.xpReward} XP</span>
+                  <span className="text-2xl shrink-0">+{habit.xpReward} XP</span>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -944,7 +944,7 @@ export default function Home() {
           </DialogContent>
         </Dialog>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg pb-[env(safe-area-inset-bottom)]">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },

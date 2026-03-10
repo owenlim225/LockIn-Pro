@@ -38,14 +38,11 @@ export function LeagueStatusBar({ stats }: LeagueStatusBarProps) {
     : 100;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 shrink-0">
-      <div className="flex items-center gap-2">
-        <span className="text-xl" aria-hidden>{leagueIcons[stats.league]}</span>
-        <span className="font-bold text-foreground text-sm whitespace-nowrap">
-          {leagueNames[stats.league]}
-        </span>
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          {stats.totalXP.toLocaleString()}/{nextRange ? nextRange.min.toLocaleString() : '∞'} XP
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 shrink-0 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 max-w-[180px] sm:max-w-none">
+        <span className="text-xl shrink-0" aria-hidden>{leagueIcons[stats.league]}</span>
+        <span className="font-bold text-foreground text-sm truncate" title={`${leagueNames[stats.league]} ${stats.totalXP}/${nextRange ? nextRange.min : '∞'} XP`}>
+          {leagueNames[stats.league]} {stats.totalXP.toLocaleString()}/{nextRange ? nextRange.min.toLocaleString() : '∞'} XP
         </span>
       </div>
       <div className="flex items-center gap-2">

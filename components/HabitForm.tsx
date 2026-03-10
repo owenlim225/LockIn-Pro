@@ -88,7 +88,7 @@ export function HabitForm({ onSubmit, onCancel, initialHabit, defaultBadHabit }:
   };
 
   return (
-    <Card className="rounded-3xl p-6 shadow-md border-2 border-primary/20 bg-card">
+    <Card className="w-full min-w-0 rounded-3xl p-6 shadow-md border-2 border-primary/20 bg-card">
       <h2 className="text-2xl font-bold mb-6">
         {initialHabit ? 'Edit Habit' : 'New Habit'}
       </h2>
