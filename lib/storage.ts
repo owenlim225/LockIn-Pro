@@ -45,7 +45,10 @@ export class StorageManager {
         habits: parsed.habits.map((h: any) => ({
           ...h,
           createdAt: new Date(h.createdAt),
-          completions: h.completions.map((c: any) => ({
+          reminderAt: h.reminderAt ? new Date(h.reminderAt) : null,
+          dueDate: h.dueDate ? new Date(h.dueDate) : null,
+          customDueDateTime: h.customDueDateTime ? new Date(h.customDueDateTime) : null,
+          completions: (h.completions ?? []).map((c: any) => ({
             ...c,
             completedAt: new Date(c.completedAt),
           })),

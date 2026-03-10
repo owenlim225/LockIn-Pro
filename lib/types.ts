@@ -10,6 +10,10 @@ export interface Habit {
   icon: string;
   createdAt: Date;
   completions: HabitCompletion[];
+  isStarred?: boolean;
+  reminderAt?: Date | null;
+  dueDate?: Date | null;
+  customDueDateTime?: Date | null;
 }
 
 export interface HabitCompletion {
@@ -18,6 +22,7 @@ export interface HabitCompletion {
   completedAt: Date;
   notes: string;
   xpEarned: number;
+  proofImageUrl?: string;
 }
 
 export interface UserStats {

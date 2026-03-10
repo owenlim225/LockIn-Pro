@@ -13,6 +13,17 @@ interface HabitFormProps {
 const ICON_OPTIONS = ['running', 'meditation', 'reading', 'water', 'sleep', 'exercise', 'coding', 'cooking'];
 const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
 
+function toDateTimeLocal(d: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function fromDateTimeLocal(s: string): Date | null {
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) {
   const [title, setTitle] = useState(initialHabit?.title || '');
   const [description, setDescription] = useState(initialHabit?.description || '');
@@ -20,6 +31,28 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
   const [recurrence, setRecurrence] = useState<Recurrence>(initialHabit?.recurrence || 'daily');
   const [icon, setIcon] = useState(initialHabit?.icon || 'default');
   const [color, setColor] = useState(initialHabit?.color || COLORS[0]);
+  const [isStarred, setIsStarred] = useState(initialHabit?.isStarred ?? false);
+  const [reminderAt, setReminderAt] = useState<string>(initialHabit?.reminderAt ? toDateTimeLocal(new Date(initialHabit.reminderAt)) : '');
+  const [dueDate, setDueDate] = useState<string>(initialHabit?.dueDate ? toDateTimeLocal(new Date(initialHabit.dueDate)) : '');
+  const [customDueDateTime, setCustomDueDateTime] = useState<string>(initialHabit?.customDueDateTime ? toDateTimeLocal(new Date(initialHabit.customDueDateTime)) : '');
+
+  const setCustomPreset = (preset: 'today' | 'tomorrow' | 'next_week') => {
+    const now = new Date();
+    let d: Date;
+    if (preset === 'today') {
+      d = new Date(now);
+      d.setHours(17, 0, 0, 0);
+    } else if (preset === 'tomorrow') {
+      d = new Date(now);
+      d.setDate(d.getDate() + 1);
+      d.setHours(17, 0, 0, 0);
+    } else {
+      d = new Date(now);
+      d.setDate(d.getDate() + 7);
+      d.setHours(17, 0, 0, 0);
+    }
+    setCustomDueDateTime(toDateTimeLocal(d));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +69,10 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
       color,
       createdAt: initialHabit?.createdAt || new Date(),
       completions: initialHabit?.completions || [],
+      isStarred,
+      reminderAt: fromDateTimeLocal(reminderAt),
+      dueDate: fromDateTimeLocal(dueDate),
+      customDueDateTime: recurrence === 'custom' ? fromDateTimeLocal(customDueDateTime) : null,
     };
 
     onSubmit(habit);
@@ -88,6 +125,43 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
           <p className="text-xs text-foreground/60 mt-1">Higher rewards for harder habits</p>
         </div>
 
+        {/* Priority / Star */}
+        <div>
+          <label className="block text-sm font-semibold mb-2">Priority</label>
+          <button
+            type="button"
+            onClick={() => setIsStarred(!isStarred)}
+            className={`flex items-center gap-2 py-2 px-3 rounded-xl font-semibold transition-colors ${
+              isStarred ? 'bg-primary/20 text-primary' : 'bg-muted text-foreground hover:bg-muted/80'
+            }`}
+          >
+            {isStarred ? <span className="text-lg">★</span> : <span className="text-lg">☆</span>}
+            {isStarred ? 'Top priority' : 'Mark as priority'}
+          </button>
+        </div>
+
+        {/* Reminder & Due date */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2">Reminder (optional)</label>
+            <input
+              type="datetime-local"
+              value={reminderAt}
+              onChange={(e) => setReminderAt(e.target.value)}
+              className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-2">Due date (optional)</label>
+            <input
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
+
         {/* Recurrence */}
         <div>
           <label className="block text-sm font-semibold mb-3">Recurrence</label>
@@ -107,6 +181,25 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
               </button>
             ))}
           </div>
+          {recurrence === 'custom' && (
+            <div className="mt-3 space-y-3">
+              <p className="text-xs text-foreground/60">When should this repeat?</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setCustomPreset('today')} className="py-2 px-3 rounded-xl text-sm font-semibold bg-muted hover:bg-muted/80">Today</button>
+                <button type="button" onClick={() => setCustomPreset('tomorrow')} className="py-2 px-3 rounded-xl text-sm font-semibold bg-muted hover:bg-muted/80">Tomorrow</button>
+                <button type="button" onClick={() => setCustomPreset('next_week')} className="py-2 px-3 rounded-xl text-sm font-semibold bg-muted hover:bg-muted/80">Next week</button>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">Date & time</label>
+                <input
+                  type="datetime-local"
+                  value={customDueDateTime}
+                  onChange={(e) => setCustomDueDateTime(e.target.value)}
+                  className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Icon Selection */}

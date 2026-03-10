@@ -50,7 +50,7 @@ export default function Home() {
     return StorageManager.getHabitCompletion(habit.id);
   };
 
-  const handleCompleteHabit = (habitId: string, notes: string) => {
+  const handleCompleteHabit = (habitId: string, notes: string, proofImageUrl?: string) => {
     const habit = appData.habits.find(h => h.id === habitId);
     if (!habit) return;
 
@@ -62,6 +62,7 @@ export default function Home() {
       completedAt: new Date(),
       notes,
       xpEarned: habit.xpReward,
+      ...(proofImageUrl && { proofImageUrl }),
     };
 
     StorageManager.addCompletion(habitId, completion);
@@ -73,6 +74,13 @@ export default function Home() {
     if (achievements.length > 0) {
       setCurrentAchievement(achievements[0]);
     }
+  };
+
+  const handleToggleStar = (habitId: string) => {
+    const habit = appData.habits.find(h => h.id === habitId);
+    if (!habit) return;
+    StorageManager.updateHabit(habitId, { isStarred: !habit.isStarred });
+    setAppData(StorageManager.getData());
   };
 
   const handleAddHabit = (habit: Habit) => {
@@ -197,18 +205,22 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-4">
-              {appData.habits.map(habit => (
-                <TaskCard
-                  key={habit.id}
-                  habit={habit}
-                  todayCompletion={getTodayCompletion(habit)}
-                  onComplete={handleCompleteHabit}
-                  onShowDetails={() => {
-                    setSelectedHabit(habit);
-                    setView('calendar');
-                  }}
-                />
-              ))}
+              {[...appData.habits]
+                .sort((a, b) => (b.isStarred ? 1 : 0) - (a.isStarred ? 1 : 0))
+                .map(habit => (
+                  <TaskCard
+                    key={habit.id}
+                    habit={habit}
+                    todayCompletion={getTodayCompletion(habit)}
+                    onComplete={handleCompleteHabit}
+                    onShowDetails={() => {
+                      setSelectedHabit(habit);
+                      setView('calendar');
+                    }}
+                    onToggleStar={handleToggleStar}
+                    onRequestComplete={() => {}}
+                  />
+                ))}
             </div>
           )}
 

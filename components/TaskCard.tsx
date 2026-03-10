@@ -4,12 +4,15 @@ import { Habit, HabitCompletion } from '@/lib/types';
 import { useState, useRef } from 'react';
 import { FireSparkEffect } from './FireSparkEffect';
 import { CelebrationEffect } from './CelebrationEffect';
+import { CompletionProofModal } from './CompletionProofModal';
 
 interface TaskCardProps {
   habit: Habit;
   todayCompletion: HabitCompletion | null;
-  onComplete: (habitId: string, notes: string) => void;
+  onComplete: (habitId: string, notes: string, proofImageUrl?: string) => void;
   onShowDetails: (habit: Habit) => void;
+  onToggleStar?: (habitId: string) => void;
+  onRequestComplete?: (habitId: string, notes: string) => void;
 }
 
 export function TaskCard({
@@ -17,15 +20,18 @@ export function TaskCard({
   todayCompletion,
   onComplete,
   onShowDetails,
+  onToggleStar,
+  onRequestComplete,
 }: TaskCardProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState('');
   const [fireEffect, setFireEffect] = useState(false);
   const [celebrateEffect, setCelebrateEffect] = useState(false);
   const [effectPos, setEffectPos] = useState({ x: 0, y: 0 });
+  const [showProofModal, setShowProofModal] = useState(false);
   const checkboxRef = useRef<HTMLInputElement>(null);
 
-  const handleComplete = (e: React.MouseEvent<HTMLDivElement>) => {
+  const triggerComplete = (proofImageUrl?: string) => {
     const rect = checkboxRef.current?.getBoundingClientRect();
     if (rect) {
       setEffectPos({
@@ -33,18 +39,38 @@ export function TaskCard({
         y: rect.top + rect.height / 2,
       });
     }
-    
     setFireEffect(true);
     setCelebrateEffect(true);
-    onComplete(habit.id, notes);
+    onComplete(habit.id, notes, proofImageUrl);
     setNotes('');
     setShowNotes(false);
+    setShowProofModal(false);
+  };
+
+  const handleCompleteClick = () => {
+    if (onRequestComplete) {
+      setShowProofModal(true);
+    } else {
+      triggerComplete();
+    }
+  };
+
+  const handleProofConfirm = (proofImageUrl: string) => {
+    triggerComplete(proofImageUrl);
   };
 
   const isCompleted = !!todayCompletion;
+  const isStarred = !!habit.isStarred;
 
   return (
     <>
+      {showProofModal && (
+        <CompletionProofModal
+          habitTitle={habit.title}
+          onConfirm={handleProofConfirm}
+          onCancel={() => setShowProofModal(false)}
+        />
+      )}
       <FireSparkEffect
         isActive={fireEffect}
         x={effectPos.x}
@@ -61,7 +87,7 @@ export function TaskCard({
           {/* Checkbox */}
           <div
             ref={checkboxRef}
-            onClick={handleComplete}
+            onClick={isCompleted ? undefined : handleCompleteClick}
             className={`flex-shrink-0 w-8 h-8 rounded-full border-3 flex items-center justify-center cursor-pointer transition-all ${
               isCompleted
                 ? 'bg-secondary border-secondary'
@@ -77,11 +103,37 @@ export function TaskCard({
 
           {/* Task Info */}
           <div className="flex-1 min-w-0">
-            <h3 className={`text-lg font-bold transition-opacity ${isCompleted ? 'opacity-60' : ''}`}>
-              {habit.title}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className={`text-lg font-bold transition-opacity ${isCompleted ? 'opacity-60' : ''}`}>
+                {habit.title}
+              </h3>
+              {onToggleStar && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onToggleStar(habit.id); }}
+                  className="p-1 rounded hover:bg-muted transition-colors"
+                  aria-label={isStarred ? 'Unstar' : 'Star'}
+                >
+                  {isStarred ? (
+                    <span className="text-primary text-lg">★</span>
+                  ) : (
+                    <span className="text-foreground/40 text-lg">☆</span>
+                  )}
+                </button>
+              )}
+            </div>
             {habit.description && (
               <p className="text-sm text-foreground/60 mt-1">{habit.description}</p>
+            )}
+            {(habit.reminderAt || habit.dueDate || (habit.recurrence === 'custom' && habit.customDueDateTime)) && (
+              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-foreground/60">
+                {habit.reminderAt && (
+                  <span>Remind: {habit.reminderAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} {habit.reminderAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                )}
+                {(habit.dueDate || (habit.recurrence === 'custom' && habit.customDueDateTime)) && (
+                  <span>Due: {(habit.dueDate || habit.customDueDateTime)!.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} {(habit.dueDate || habit.customDueDateTime)!.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                )}
+              </div>
             )}
 
             {/* Completion Details */}
@@ -99,6 +151,9 @@ export function TaskCard({
                 </span>
                 {todayCompletion.notes && (
                   <span className="text-foreground/60 italic">"{todayCompletion.notes}"</span>
+                )}
+                {todayCompletion.proofImageUrl && (
+                  <img src={todayCompletion.proofImageUrl} alt="Proof" className="mt-1 w-12 h-12 rounded-lg object-cover border border-border" />
                 )}
               </div>
             )}
@@ -131,7 +186,7 @@ export function TaskCard({
               {showNotes ? 'Cancel' : 'Add Note'}
             </button>
             <button
-              onClick={handleComplete}
+              onClick={handleCompleteClick}
               className="flex-1 text-sm font-semibold py-2 px-3 rounded-xl bg-secondary hover:bg-secondary/90 text-white transition-colors"
             >
               Mark Done
