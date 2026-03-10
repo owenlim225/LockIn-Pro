@@ -480,9 +480,6 @@ export default function Home() {
         {/* Add Habit Modal */}
         <Dialog open={showAddHabit && !selectedHabit} onOpenChange={(open) => !open && setShowAddHabit(false)}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/20">
-            <DialogHeader>
-              <DialogTitle>New Habit</DialogTitle>
-            </DialogHeader>
             <HabitForm
               onSubmit={handleAddHabit}
               onCancel={() => setShowAddHabit(false)}
@@ -504,7 +501,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto px-4 py-8 animate-in fade-in duration-300">
           {appData.habits.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No habits yet. Create some habits to get started!</p>
@@ -517,7 +514,7 @@ export default function Home() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 animate-in fade-in duration-300">
               {appData.habits.map((habit, index) => (
                 <QuestNode
                   key={habit.id}
@@ -757,7 +754,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 animate-in fade-in duration-300">
           {appData.habits.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No habits yet</p>
@@ -898,9 +895,6 @@ export default function Home() {
         {/* Edit Habit Modal */}
         <Dialog open={!!(showAddHabit && selectedHabit)} onOpenChange={(open) => { if (!open) { setShowAddHabit(false); setSelectedHabit(null); } }}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/20">
-            <DialogHeader>
-              <DialogTitle>Edit Habit</DialogTitle>
-            </DialogHeader>
             {selectedHabit && (
               <HabitForm
                 initialHabit={selectedHabit}

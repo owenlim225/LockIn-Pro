@@ -35,7 +35,7 @@ export function StreakCounter({ currentStreak, longestStreak }: StreakCounterPro
             {displayStreak}
           </p>
         </div>
-        <p className="text-xs text-foreground/60">Current Streak</p>
+        <p className="text-xs text-muted-foreground">Current Streak</p>
       </div>
 
       {longestStreak > currentStreak && (
@@ -43,7 +43,7 @@ export function StreakCounter({ currentStreak, longestStreak }: StreakCounterPro
           <span className="text-lg">👑</span>
           <div>
             <p className="text-xs font-bold text-primary">{longestStreak}</p>
-            <p className="text-xs text-foreground/60">Best</p>
+            <p className="text-xs text-muted-foreground">Best</p>
           </div>
         </div>
       )}

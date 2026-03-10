@@ -1,6 +1,16 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 interface CompletionProofModalProps {
   habitTitle: string;
@@ -57,13 +67,13 @@ export function CompletionProofModal({ habitTitle, onConfirm, onCancel }: Comple
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-background rounded-3xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl">
-        <div className="p-5 border-b border-border">
-          <h2 className="text-xl font-bold">Add proof to complete</h2>
-          <p className="text-sm text-foreground/60 mt-1">{habitTitle}</p>
-        </div>
-        <div className="p-5 space-y-4">
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/20 duration-300">
+        <DialogHeader>
+          <DialogTitle>Add proof to complete</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">{habitTitle}</p>
+        </DialogHeader>
+        <div className="space-y-4">
           <input
             ref={cameraInputRef}
             type="file"
@@ -82,62 +92,68 @@ export function CompletionProofModal({ habitTitle, onConfirm, onCancel }: Comple
             aria-hidden
           />
           <div className="flex gap-3">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={handleTakePhoto}
-              className="flex-1 py-3 px-4 rounded-xl font-semibold bg-primary/20 text-foreground hover:bg-primary/30 transition-colors"
+              className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
             >
               Take photo
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
               onClick={handleChooseFromGallery}
-              className="flex-1 py-3 px-4 rounded-xl font-semibold bg-primary/20 text-foreground hover:bg-primary/30 transition-colors"
+              className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
             >
               Choose from gallery
-            </button>
+            </Button>
           </div>
           {proofImageUrl && (
             <div className="relative">
               <img src={proofImageUrl} alt="Proof" className="w-full max-h-48 object-contain rounded-xl border border-border bg-muted/30" />
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => setProofImageUrl(null)}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white text-sm hover:bg-black/70"
+                className="absolute top-2 right-2 rounded-full bg-black/50 text-white hover:bg-black/70 border-0"
               >
                 Remove
-              </button>
+              </Button>
             </div>
           )}
           <div>
-            <label className="block text-sm font-semibold mb-1">Note (optional)</label>
-            <textarea
+            <Label className="text-sm font-semibold mb-1 block">Note (optional)</Label>
+            <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add a reflection..."
-              className="w-full p-3 bg-input rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border"
+              className="rounded-xl resize-none"
               rows={2}
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
-        <div className="p-5 flex gap-3 border-t border-border">
-          <button
+        <DialogFooter className="flex gap-3 sm:gap-2">
+          <Button
             type="button"
+            variant="outline"
             onClick={onCancel}
-            className="flex-1 py-3 px-4 rounded-xl font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            className="flex-1 rounded-xl transition-all active:scale-[0.98]"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleConfirm}
-            className="flex-1 py-3 px-4 rounded-xl font-semibold bg-secondary text-white hover:bg-secondary/90 transition-colors"
+            className="flex-1 rounded-xl transition-all active:scale-[0.98]"
           >
             Confirm
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

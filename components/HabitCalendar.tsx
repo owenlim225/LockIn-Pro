@@ -1,7 +1,16 @@
 'use client';
 
-import { Habit } from '@/lib/types';
+import { Habit, HabitCompletion } from '@/lib/types';
 import { useState } from 'react';
+import { CompletionDetailsModal } from '@/components/CompletionDetailsModal';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface HabitCalendarProps {
   habit: Habit;
@@ -9,6 +18,8 @@ interface HabitCalendarProps {
 
 export function HabitCalendar({ habit }: HabitCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedCompletion, setSelectedCompletion] = useState<HabitCompletion | null>(null);
+  const [noCompletionDate, setNoCompletionDate] = useState<{ year: number; month: number; day: number } | null>(null);
 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
@@ -21,6 +32,13 @@ export function HabitCalendar({ habit }: HabitCalendarProps) {
       return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
     })
   );
+
+  const getCompletionForDay = (day: number): HabitCompletion | null => {
+    return habit.completions.find(c => {
+      const d = new Date(c.completedAt);
+      return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+    }) ?? null;
+  };
 
   const days = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
@@ -38,6 +56,15 @@ export function HabitCalendar({ habit }: HabitCalendarProps) {
   const isCompleted = (day: number) => {
     const dateStr = `${year}-${month}-${day}`;
     return completedDates.has(dateStr);
+  };
+
+  const handleDayClick = (day: number) => {
+    const completion = getCompletionForDay(day);
+    if (completion) {
+      setSelectedCompletion(completion);
+    } else {
+      setNoCompletionDate({ year, month, day });
+    }
   };
 
   const prevMonth = () => {
@@ -92,18 +119,23 @@ export function HabitCalendar({ habit }: HabitCalendarProps) {
         {days.map((day, index) => (
           <div
             key={index}
+            role={day !== null ? 'button' : undefined}
+            tabIndex={day !== null ? 0 : undefined}
+            onClick={day !== null ? () => handleDayClick(day) : undefined}
+            onKeyDown={day !== null ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDayClick(day); } } : undefined}
             className={`aspect-square flex items-center justify-center rounded-lg font-semibold text-sm transition-all ${
               day === null
                 ? ''
                 : isCompleted(day as number)
-                  ? 'bg-secondary text-white'
-                  : 'bg-muted text-foreground'
-            }`}
+                  ? 'bg-secondary text-white cursor-pointer hover:bg-secondary/90 active:scale-[0.98]'
+                  : 'bg-muted text-foreground cursor-pointer hover:bg-muted/80 active:scale-[0.98]'
+            } ${day !== null ? 'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2' : ''}`}
+            aria-label={day !== null ? `Day ${day}${isCompleted(day as number) ? ', completed – view details' : ', no completion'}` : undefined}
           >
             {day && (
               <>
                 {isCompleted(day) && (
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 )}
@@ -113,6 +145,42 @@ export function HabitCalendar({ habit }: HabitCalendarProps) {
           </div>
         ))}
       </div>
+
+      {selectedCompletion && (
+        <CompletionDetailsModal
+          habit={habit}
+          completion={selectedCompletion}
+          onClose={() => setSelectedCompletion(null)}
+        />
+      )}
+
+      {noCompletionDate && (
+        <Dialog open onOpenChange={(open) => !open && setNoCompletionDate(null)}>
+          <DialogContent className="sm:max-w-md rounded-3xl border-2 border-primary/20 duration-300">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold pr-8">{habit.title}</DialogTitle>
+              {habit.description && (
+                <p className="text-sm text-foreground/60 mt-1">{habit.description}</p>
+              )}
+            </DialogHeader>
+            <p className="text-sm text-foreground/70 py-2">
+              No completion recorded for{' '}
+              {new Date(noCompletionDate.year, noCompletionDate.month, noCompletionDate.day).toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+              .
+            </p>
+            <DialogFooter className="sm:justify-end">
+              <Button onClick={() => setNoCompletionDate(null)} className="w-full sm:w-auto rounded-xl">
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Stats */}
       <div className="mt-6 pt-6 border-t border-border">

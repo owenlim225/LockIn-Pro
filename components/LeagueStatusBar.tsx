@@ -44,7 +44,7 @@ export function LeagueStatusBar({ stats }: LeagueStatusBarProps) {
         <span className="font-bold text-foreground text-sm whitespace-nowrap">
           {leagueNames[stats.league]}
         </span>
-        <span className="text-xs text-foreground/60 whitespace-nowrap">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
           {stats.totalXP.toLocaleString()}/{nextRange ? nextRange.min.toLocaleString() : '∞'} XP
         </span>
       </div>

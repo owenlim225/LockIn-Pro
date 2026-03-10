@@ -37,12 +37,12 @@ export function AchievementToast({ achievement, onComplete }: AchievementToastPr
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="bg-white rounded-2xl shadow-2xl border-2 border-primary p-4 min-w-64">
+      <div className="bg-card rounded-2xl shadow-2xl border-2 border-primary p-4 min-w-64">
         <div className="flex items-start gap-4">
-          <div className="text-4xl flex-shrink-0">{achievement.icon}</div>
+          <div className="text-4xl shrink-0">{achievement.icon}</div>
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-lg text-foreground">{achievement.title}</h3>
-            <p className="text-sm text-foreground/60 mt-1">{achievement.description}</p>
+            <p className="text-sm text-muted-foreground mt-1">{achievement.description}</p>
             <p className="text-sm font-bold text-secondary mt-2">+{achievement.xpBonus} Bonus XP</p>
           </div>
         </div>

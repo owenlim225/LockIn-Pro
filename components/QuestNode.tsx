@@ -44,7 +44,7 @@ export function QuestNode({
         className={`relative w-24 h-24 rounded-full font-bold text-3xl transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center shadow-lg border-4 ${
           isCompleted
             ? 'bg-secondary border-secondary/50 shadow-secondary/30 scale-105 animate-pulse-grow'
-            : 'bg-white border-primary hover:border-secondary'
+            : 'bg-card border-primary hover:border-secondary'
         }`}
       >
         <span>{icon}</span>

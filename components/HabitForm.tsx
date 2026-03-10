@@ -3,6 +3,11 @@
 import { Habit, Recurrence } from '@/lib/types';
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 interface HabitFormProps {
   onSubmit: (habit: Habit) => void;
@@ -79,40 +84,39 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-md border-2 border-primary/20">
+    <Card className="rounded-3xl p-6 shadow-md border-2 border-primary/20 bg-card">
       <h2 className="text-2xl font-bold mb-6">
         {initialHabit ? 'Edit Habit' : 'New Habit'}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Title */}
         <div>
-          <label className="block text-sm font-semibold mb-2">Habit Name *</label>
-          <input
+          <Label htmlFor="habit-title" className="text-sm font-semibold mb-2 block">Habit Name *</Label>
+          <Input
+            id="habit-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Morning Workout"
-            className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+            className="rounded-xl h-auto py-3 px-4"
             required
           />
         </div>
 
-        {/* Description */}
         <div>
-          <label className="block text-sm font-semibold mb-2">Description</label>
-          <textarea
+          <Label htmlFor="habit-desc" className="text-sm font-semibold mb-2 block">Description</Label>
+          <Textarea
+            id="habit-desc"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What's this habit about?"
-            className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors resize-none"
+            className="rounded-xl min-h-0 resize-none py-3 px-4"
             rows={3}
           />
         </div>
 
-        {/* XP Reward */}
         <div>
-          <label className="block text-sm font-semibold mb-2">XP Reward: {xpReward}</label>
+          <Label className="text-sm font-semibold mb-2 block">XP Reward: {xpReward}</Label>
           <input
             type="range"
             min="5"
@@ -122,89 +126,84 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
             onChange={(e) => setXpReward(parseInt(e.target.value))}
             className="w-full accent-secondary"
           />
-          <p className="text-xs text-foreground/60 mt-1">Higher rewards for harder habits</p>
+          <p className="text-xs text-muted-foreground mt-1">Higher rewards for harder habits</p>
         </div>
 
-        {/* Priority / Star */}
         <div>
-          <label className="block text-sm font-semibold mb-2">Priority</label>
-          <button
+          <Label className="text-sm font-semibold mb-2 block">Priority</Label>
+          <Button
             type="button"
+            variant={isStarred ? 'default' : 'outline'}
             onClick={() => setIsStarred(!isStarred)}
-            className={`flex items-center gap-2 py-2 px-3 rounded-xl font-semibold transition-colors ${
-              isStarred ? 'bg-primary/20 text-primary' : 'bg-muted text-foreground hover:bg-muted/80'
-            }`}
+            className="rounded-xl font-semibold transition-all active:scale-[0.98]"
           >
             {isStarred ? <span className="text-lg">★</span> : <span className="text-lg">☆</span>}
-            {isStarred ? 'Top priority' : 'Mark as priority'}
-          </button>
+            <span className="ml-2">{isStarred ? 'Top priority' : 'Mark as priority'}</span>
+          </Button>
         </div>
 
-        {/* Reminder & Due date */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2">Reminder (optional)</label>
-            <input
+            <Label htmlFor="habit-reminder" className="text-sm font-semibold mb-2 block">Reminder (optional)</Label>
+            <Input
+              id="habit-reminder"
               type="datetime-local"
               value={reminderAt}
               onChange={(e) => setReminderAt(e.target.value)}
-              className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+              className="rounded-xl h-auto py-3 px-4"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2">Due date (optional)</label>
-            <input
+            <Label htmlFor="habit-due" className="text-sm font-semibold mb-2 block">Due date (optional)</Label>
+            <Input
+              id="habit-due"
               type="datetime-local"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+              className="rounded-xl h-auto py-3 px-4"
             />
           </div>
         </div>
 
-        {/* Recurrence */}
         <div>
-          <label className="block text-sm font-semibold mb-3">Recurrence</label>
+          <Label className="text-sm font-semibold mb-3 block">Recurrence</Label>
           <div className="flex gap-3">
             {(['daily', 'weekly', 'custom'] as Recurrence[]).map(rec => (
-              <button
+              <Button
                 key={rec}
                 type="button"
+                variant={recurrence === rec ? 'secondary' : 'outline'}
                 onClick={() => setRecurrence(rec)}
-                className={`flex-1 py-2 px-3 rounded-xl font-semibold transition-colors capitalize ${
-                  recurrence === rec
-                    ? 'bg-secondary text-white'
-                    : 'bg-muted text-foreground hover:bg-muted/80'
-                }`}
+                className="flex-1 rounded-xl font-semibold capitalize transition-all active:scale-[0.98]"
               >
                 {rec}
-              </button>
+              </Button>
             ))}
           </div>
           {recurrence === 'custom' && (
             <div className="mt-3 space-y-3">
-              <p className="text-xs text-foreground/60">When should this repeat?</p>
+              <p className="text-xs text-muted-foreground">When should this repeat?</p>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setCustomPreset('today')} className="py-2 px-3 rounded-xl text-sm font-semibold bg-muted hover:bg-muted/80">Today</button>
-                <button type="button" onClick={() => setCustomPreset('tomorrow')} className="py-2 px-3 rounded-xl text-sm font-semibold bg-muted hover:bg-muted/80">Tomorrow</button>
-                <button type="button" onClick={() => setCustomPreset('next_week')} className="py-2 px-3 rounded-xl text-sm font-semibold bg-muted hover:bg-muted/80">Next week</button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setCustomPreset('today')} className="rounded-xl font-semibold transition-all active:scale-[0.98]">Today</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setCustomPreset('tomorrow')} className="rounded-xl font-semibold transition-all active:scale-[0.98]">Tomorrow</Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => setCustomPreset('next_week')} className="rounded-xl font-semibold transition-all active:scale-[0.98]">Next week</Button>
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1">Date & time</label>
-                <input
+                <Label htmlFor="habit-custom-due" className="text-xs font-semibold mb-1 block">Date & time</Label>
+                <Input
+                  id="habit-custom-due"
                   type="datetime-local"
                   value={customDueDateTime}
                   onChange={(e) => setCustomDueDateTime(e.target.value)}
-                  className="w-full px-4 py-3 bg-input rounded-xl border-2 border-primary/20 focus:border-primary focus:outline-none transition-colors"
+                  className="rounded-xl h-auto py-3 px-4"
                 />
               </div>
             </div>
           )}
         </div>
 
-        {/* Icon Selection */}
         <div>
-          <label className="block text-sm font-semibold mb-3">Icon</label>
+          <Label className="text-sm font-semibold mb-3 block">Icon</Label>
           <div className="grid grid-cols-4 gap-3">
             {ICON_OPTIONS.map(opt => {
               const icons: Record<string, string> = {
@@ -218,26 +217,25 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
                 cooking: '🍳',
               };
               return (
-                <button
+                <Button
                   key={opt}
                   type="button"
+                  variant="outline"
+                  size="icon"
                   onClick={() => setIcon(opt)}
-                  className={`p-3 rounded-xl text-2xl transition-all ${
-                    icon === opt
-                      ? 'bg-primary scale-110'
-                      : 'bg-muted hover:bg-muted/80'
+                  className={`p-3 rounded-xl text-2xl h-auto transition-all active:scale-95 ${
+                    icon === opt ? 'bg-primary' : ''
                   }`}
                 >
                   {icons[opt]}
-                </button>
+                </Button>
               );
             })}
           </div>
         </div>
 
-        {/* Color Selection */}
         <div>
-          <label className="block text-sm font-semibold mb-3">Color Theme</label>
+          <Label className="text-sm font-semibold mb-3 block">Color Theme</Label>
           <div className="flex gap-2">
             {COLORS.map(c => (
               <button
@@ -248,28 +246,30 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
                   color === c ? 'border-foreground scale-110' : 'border-transparent'
                 }`}
                 style={{ backgroundColor: c }}
+                aria-label={`Color ${c}`}
               />
             ))}
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-3 pt-4">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onCancel}
-            className="flex-1 py-3 px-4 rounded-xl font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="flex-1 py-3 px-4 rounded-xl font-semibold bg-secondary text-white hover:bg-secondary/90 transition-colors"
+            variant="secondary"
+            className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
           >
             {initialHabit ? 'Update' : 'Create'} Habit
-          </button>
+          </Button>
         </div>
       </form>
-    </div>
+    </Card>
   );
 }

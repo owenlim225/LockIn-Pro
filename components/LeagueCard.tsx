@@ -2,6 +2,7 @@
 
 import { UserStats, League } from '@/lib/types';
 import { StreakCounter } from './StreakCounter';
+import { Card } from '@/components/ui/card';
 
 interface LeagueCardProps {
   stats: UserStats;
@@ -41,13 +42,13 @@ export function LeagueCard({ stats }: LeagueCardProps) {
     : 100;
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-sm border-2 border-primary/20">
+    <Card className="rounded-3xl p-6 shadow-sm border-2 border-primary/20 bg-card animate-in fade-in slide-in-from-bottom-2 duration-300 transition-shadow hover:shadow-md">
       <div className="text-center mb-6">
         <div className="text-6xl mb-3">{leagueIcons[stats.league]}</div>
         <h2 className="text-2xl font-bold text-foreground">
           {leagueNames[stats.league]} League
         </h2>
-        <p className="text-sm text-foreground/60 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {stats.totalXP.toLocaleString()} / {nextRange ? nextRange.min.toLocaleString() : '∞'} XP
         </p>
       </div>
@@ -69,7 +70,7 @@ export function LeagueCard({ stats }: LeagueCardProps) {
               style={{ width: `${Math.min(progressPercent, 100)}%` }}
             />
           </div>
-          <p className="text-xs text-foreground/60 mt-2 text-center">
+          <p className="text-xs text-muted-foreground mt-2 text-center">
             {(nextRange.min - stats.totalXP).toLocaleString()} XP to {leagueNames[nextLeague]}
           </p>
         </div>
@@ -79,13 +80,13 @@ export function LeagueCard({ stats }: LeagueCardProps) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-primary/10 rounded-2xl p-3 text-center">
           <p className="text-2xl font-bold text-primary">{stats.totalXP.toLocaleString()}</p>
-          <p className="text-xs text-foreground/60 mt-1">Total XP</p>
+          <p className="text-xs text-muted-foreground mt-1">Total XP</p>
         </div>
         <div className="bg-accent/10 rounded-2xl p-3 text-center">
           <p className="text-2xl font-bold text-accent">{stats.habitCount}</p>
-          <p className="text-xs text-foreground/60 mt-1">Habits</p>
+          <p className="text-xs text-muted-foreground mt-1">Habits</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

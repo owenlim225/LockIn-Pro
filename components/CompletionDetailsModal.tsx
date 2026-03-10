@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface CompletionDetailsModalProps {
   habit: Habit;
@@ -27,7 +28,7 @@ export function CompletionDetailsModal({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md rounded-3xl border-2 border-primary/20">
+      <DialogContent className="sm:max-w-md rounded-3xl border-2 border-primary/20 duration-300">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold pr-8">{habit.title}</DialogTitle>
           {habit.description && (
@@ -79,13 +80,9 @@ export function CompletionDetailsModal({
         </div>
 
         <DialogFooter className="sm:justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full sm:w-auto py-3 px-4 rounded-xl font-semibold bg-primary text-foreground hover:bg-primary/90 transition-colors"
-          >
+          <Button onClick={onClose} className="w-full sm:w-auto rounded-xl transition-all active:scale-[0.98]">
             Close
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
