@@ -4,7 +4,9 @@
 **Date:** 2025-03-02  
 **Status:** Draft  
 
-This document consolidates LockIn Protocol for MVP implementation. The **canonical** source for product and architecture is [DOCUMENTATION.MD](../DOCUMENTATION.MD). LockIn is an **open-source** project with **no cryptocurrency** and **no monetization**. This file is the single reference for implementers; unknowns are listed in **Open questions / TBD**.
+This document consolidates LockIn Protocol for MVP implementation. LockIn is an **open-source** project with **no cryptocurrency** and **no monetization**. This file is the single reference for implementers; unknowns are listed in **Open questions / TBD**.
+
+**Current codebase:** This repository implements **LockIn Pro**, a habit-tracking PWA (localStorage, no backend). For the broader LockIn Protocol MVP (goals, proof, peer review), this document is the reference. See the root [README.md](../README.md) for the app's run and deploy instructions.
 
 ---
 
@@ -115,6 +117,8 @@ LockIn is an application only. No blockchain or smart contracts.
 
 ## 10. Tech stack and deployment
 
+The current LockIn Pro app uses Next.js 16 and is a PWA (Serwist). The table below describes the target stack for the full Protocol.
+
 | Layer | Technology |
 |-------|------------|
 | **Frontend** | Next.js, Tailwind; sign-up, goal creation, proof upload, dashboard, history. |
@@ -181,8 +185,8 @@ No wallet libraries, no RPC, no block explorer.
 
 | Document | Role |
 |----------|------|
-| [DOCUMENTATION.MD](../DOCUMENTATION.MD) | Canonical product and architecture (open source, no crypto, no monetization). |
-| [spec.md](../spec.md) | User journey and flows (supplemental). |
+| [README.md](../README.md) | LockIn Pro app: architecture, running, deployment (open source, no crypto, no monetization). |
+| [docs/QUEST_TRACKER.md](QUEST_TRACKER.md) | Habit tracker feature and PWA details. |
 | [external/PRD-LockIn-Protocol.md](../external/PRD-LockIn-Protocol.md) | Scope and NFRs (supplemental). |
 | [external/DevOps_strategy.md](../external/DevOps_strategy.md) | CI/CD, monitoring, incident response. |
 | [external/Customer_success_support_strategy.md](../external/Customer_success_support_strategy.md) | Onboarding, support, runbooks. |

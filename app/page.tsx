@@ -6,11 +6,13 @@ import { StorageManager } from '@/lib/storage';
 import { TaskCard } from '@/components/TaskCard';
 import { QuestNode } from '@/components/QuestNode';
 import { LeagueCard } from '@/components/LeagueCard';
+import { LeagueStatusBar } from '@/components/LeagueStatusBar';
 import { HabitForm } from '@/components/HabitForm';
 import { HabitCalendar } from '@/components/HabitCalendar';
 import { v4 as uuidv4 } from 'uuid';
 import { AchievementToast, Achievement } from '@/components/AchievementToast';
 import { checkAchievements } from '@/lib/achievements';
+import { exportToCsv, downloadCsv, getExportFilename } from '@/lib/export';
 
 type View = 'dashboard' | 'quest' | 'calendar' | 'stats' | 'manage';
 
@@ -21,6 +23,9 @@ export default function Home() {
   const [showAddHabit, setShowAddHabit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentAchievement, setCurrentAchievement] = useState<Achievement | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [showSleepModal, setShowSleepModal] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
 
   useEffect(() => {
     // Load data on mount
@@ -99,20 +104,78 @@ export default function Home() {
           achievement={currentAchievement}
           onComplete={() => setCurrentAchievement(null)}
         />
-        {/* Header */}
+        {/* Header: title + compact status bar */}
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
-          <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-black text-foreground">LockIn Pro</h1>
-            <p className="text-sm text-foreground/60 mt-1">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-            </p>
+          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-black text-foreground">LockIn Pro</h1>
+              <p className="text-sm text-foreground/60 mt-1">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+            <LeagueStatusBar stats={appData.stats} />
           </div>
         </div>
 
         {/* Main Content */}
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-          {/* League Card */}
-          <LeagueCard stats={appData.stats} />
+          {/* Wake UP / Sleep buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                StorageManager.setWakeTime(now, now);
+                setAppData(StorageManager.getData());
+                setFeedbackMessage('Wake time recorded');
+                setTimeout(() => setFeedbackMessage(null), 3000);
+              }}
+              className="py-4 px-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors text-center"
+            >
+              <span className="block text-2xl mb-1">☀️</span>
+              Wake UP
+              {(() => {
+                const rec = StorageManager.getWakeSleepForDate(new Date());
+                if (rec.wakeTime) {
+                  return (
+                    <span className="block text-xs font-normal text-foreground/60 mt-1">
+                      {new Date(rec.wakeTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                StorageManager.setSleepTime(now, now);
+                setAppData(StorageManager.getData());
+                setShowSleepModal(true);
+              }}
+              className="py-4 px-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors text-center"
+            >
+              <span className="block text-2xl mb-1">🌙</span>
+              Sleep
+              {(() => {
+                const rec = StorageManager.getWakeSleepForDate(new Date());
+                if (rec.sleepTime) {
+                  return (
+                    <span className="block text-xs font-normal text-foreground/60 mt-1">
+                      {new Date(rec.sleepTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </button>
+          </div>
+          {feedbackMessage && (
+            <p className="text-sm text-secondary font-medium text-center animate-in fade-in" role="status">
+              {feedbackMessage}
+            </p>
+          )}
 
           {/* Tasks */}
           {appData.habits.length === 0 ? (
@@ -184,6 +247,24 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* Ready for bed modal (after Sleep) */}
+        {showSleepModal && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-background rounded-3xl w-full max-w-sm p-6 shadow-lg border-2 border-primary/20">
+              <p className="text-center text-foreground font-medium">
+                Sleep time recorded. You can now lock or power off your phone.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowSleepModal(false)}
+                className="mt-4 w-full py-3 rounded-xl bg-primary text-foreground font-bold hover:bg-primary/90"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Add Habit Modal */}
         {showAddHabit && (
@@ -417,6 +498,25 @@ export default function Home() {
               })}
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const data = StorageManager.getData();
+              const csv = exportToCsv(data);
+              downloadCsv(csv, getExportFilename());
+              setExportSuccess(true);
+              setTimeout(() => setExportSuccess(false), 3000);
+            }}
+            className="w-full py-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors"
+          >
+            Export to Excel (CSV)
+          </button>
+          {exportSuccess && (
+            <p className="text-sm text-secondary font-medium text-center" role="status">
+              Export downloaded
+            </p>
+          )}
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg">
@@ -504,6 +604,25 @@ export default function Home() {
                 </div>
               </div>
             ))
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              const data = StorageManager.getData();
+              const csv = exportToCsv(data);
+              downloadCsv(csv, getExportFilename());
+              setExportSuccess(true);
+              setTimeout(() => setExportSuccess(false), 3000);
+            }}
+            className="w-full py-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors"
+          >
+            Export to Excel (CSV)
+          </button>
+          {exportSuccess && (
+            <p className="text-sm text-secondary font-medium text-center" role="status">
+              Export downloaded
+            </p>
           )}
         </div>
 

@@ -48,7 +48,7 @@ This PRD defines the scope, features, and technical requirements for the applica
 | 2 | Photo check-ins | Upload via app; backend optionally verifies (goal-aware logic); stored in app. No on-chain submission. |
 | 3 | Accountability partners | Invite via link or in-app; partner approves or rejects; no payout. |
 | 4 | Resolution | Success/fail/expired by app logic; history and dashboard. No funds. |
-| 5 | Web frontend | Sign-up, UI for all flows, basic dashboard. Next.js 15, Tailwind; hosted on Vercel or similar. |
+| 5 | Web frontend | Sign-up, UI for all flows, basic dashboard. Next.js 16, Tailwind; hosted on Vercel or similar; may be delivered as a PWA (installable, manifest, service worker). |
 | 6 | Backend (optional) | Persistence, optional photo verification, optional notifications (e.g. Firebase). Node.js/Express or serverless; Supabase or similar for profiles and check-in metadata. |
 
 ### 3.2 Out of Scope (Explicit)
@@ -91,7 +91,7 @@ This PRD defines the scope, features, and technical requirements for the applica
 
 | Component | Technology |
 |-----------|------------|
-| Frontend | Next.js 15, Tailwind CSS; Vercel or similar |
+| Frontend | Next.js 16, Tailwind CSS; Vercel or similar; PWA (installable) optional |
 | Backend | Optional Node.js/Express or serverless; Supabase or similar; optional Firebase (notifications) |
 | Verification | Optional goal-aware logic or external API; no chain |
 | Hosting | Vercel (frontend); Supabase or similar (DB/storage); optional Firebase |

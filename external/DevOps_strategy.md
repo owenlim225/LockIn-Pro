@@ -37,7 +37,7 @@ DevOps and SRE are responsible for deployment automation, monitoring, infrastruc
 
 | Layer        | Tooling                | Notes                          |
 |-------------|------------------------|--------------------------------|
-| Frontend    | Next.js 15, Vercel     | Serverless, edge, env per env |
+| Frontend    | Next.js 16, Vercel     | Serverless, edge, env per env; PWA (e.g. Serwist); prod build uses webpack |
 | Backend     | Node.js/Express        | Vercel serverless or AWS Lambda |
 | DB / Auth   | Supabase or similar    | Profiles, commitments, check-ins |
 | Notifications | Firebase (optional)  | Push, email                    |

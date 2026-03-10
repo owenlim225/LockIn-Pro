@@ -38,8 +38,15 @@ export interface LeagueInfo {
   color: string;
 }
 
+export interface WakeSleepRecord {
+  date: string;
+  wakeTime: Date | null;
+  sleepTime: Date | null;
+}
+
 export interface AppData {
   habits: Habit[];
   stats: UserStats;
   lastUpdated: Date;
+  wakeSleepLog: WakeSleepRecord[];
 }

@@ -1,6 +1,6 @@
 # =============================================================================
 # LockIn Pro – .gitignore
-# Covers: docs/skills repo + planned Next.js/Node/Python tooling
+# Next.js 16, PWA (Serwist), Node/bun/npm/pnpm; docs/skills; optional Python
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -39,7 +39,7 @@ public/workbox-*
 public/serialized-*
 
 # -----------------------------------------------------------------------------
-# Node / Next.js (when app is added)
+# Node / Next.js
 # -----------------------------------------------------------------------------
 node_modules/
 .npm
@@ -93,9 +93,11 @@ htmlcov/
 # Logs & cache
 # -----------------------------------------------------------------------------
 *.log
+debug-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 .cache/
 .parcel-cache/
 

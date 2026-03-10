@@ -42,6 +42,10 @@ All data is stored in browser localStorage under key `lockin-pro-data`, making i
 - Completions (timestamp, notes, XP earned)
 - User stats (total XP, streaks, league tier)
 
+## PWA & Installation
+
+LockIn Pro is a Progressive Web App (PWA): installable via "Add to Home Screen" (web app manifest and service worker). Data remains in localStorage; the app shell can be cached for optional offline use. Run locally with `bun run dev` or `npm run dev`; production build: `bun run build` or `npm run build`.
+
 ## Color Scheme
 
 Duolingo-inspired warm palette:

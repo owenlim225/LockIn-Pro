@@ -2,6 +2,8 @@
 
 Supporting documentation for LockIn Protocol. LockIn is **open source** with **no cryptocurrency** and **no monetization**. Use this index for product, operations, and quality context.
 
+The app in this repository is **LockIn Pro** (habit tracker, PWA). See the root [README](../README.md) for run and deploy instructions.
+
 | Document | Purpose |
 |----------|---------|
 | [PRD-LockIn-Protocol.md](PRD-LockIn-Protocol.md) | Product requirements: scope, deliverables, functional requirements, non-functional requirements, tech stack, acceptance criteria (app-only, no crypto). |

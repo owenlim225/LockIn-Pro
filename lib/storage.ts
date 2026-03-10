@@ -1,4 +1,4 @@
-import { AppData, Habit, HabitCompletion, UserStats, League } from './types';
+import { AppData, Habit, HabitCompletion, UserStats, League, WakeSleepRecord } from './types';
 
 const STORAGE_KEY = 'lockin-pro-data';
 const LEGACY_STORAGE_KEY = 'quest-tracker-data';
@@ -16,6 +16,7 @@ const DEFAULT_DATA: AppData = {
   habits: [],
   stats: DEFAULT_STATS,
   lastUpdated: new Date(),
+  wakeSleepLog: [],
 };
 
 export class StorageManager {
@@ -34,6 +35,11 @@ export class StorageManager {
       if (!data) return DEFAULT_DATA;
       
       const parsed = JSON.parse(data);
+      const wakeSleepLog: WakeSleepRecord[] = (parsed.wakeSleepLog ?? []).map((r: any) => ({
+        date: r.date,
+        wakeTime: r.wakeTime ? new Date(r.wakeTime) : null,
+        sleepTime: r.sleepTime ? new Date(r.sleepTime) : null,
+      }));
       return {
         ...parsed,
         habits: parsed.habits.map((h: any) => ({
@@ -49,6 +55,7 @@ export class StorageManager {
           lastCompletionDate: parsed.stats.lastCompletionDate ? new Date(parsed.stats.lastCompletionDate) : null,
         },
         lastUpdated: new Date(parsed.lastUpdated),
+        wakeSleepLog,
       };
     } catch {
       return DEFAULT_DATA;
@@ -103,6 +110,46 @@ export class StorageManager {
       data.lastUpdated = new Date();
       this.saveData(data);
     }
+  }
+
+  static toDateKey(date: Date): string {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString().slice(0, 10);
+  }
+
+  static getWakeSleepForDate(date: Date): WakeSleepRecord {
+    const data = this.getData();
+    const key = this.toDateKey(date);
+    const existing = data.wakeSleepLog.find((r) => r.date === key);
+    if (existing) return existing;
+    return { date: key, wakeTime: null, sleepTime: null };
+  }
+
+  static setWakeTime(date: Date, time: Date): void {
+    const data = this.getData();
+    const key = this.toDateKey(date);
+    let record = data.wakeSleepLog.find((r) => r.date === key);
+    if (!record) {
+      record = { date: key, wakeTime: null, sleepTime: null };
+      data.wakeSleepLog.push(record);
+    }
+    record.wakeTime = time;
+    data.lastUpdated = new Date();
+    this.saveData(data);
+  }
+
+  static setSleepTime(date: Date, time: Date): void {
+    const data = this.getData();
+    const key = this.toDateKey(date);
+    let record = data.wakeSleepLog.find((r) => r.date === key);
+    if (!record) {
+      record = { date: key, wakeTime: null, sleepTime: null };
+      data.wakeSleepLog.push(record);
+    }
+    record.sleepTime = time;
+    data.lastUpdated = new Date();
+    this.saveData(data);
   }
 
   static getHabitCompletion(habitId: string): HabitCompletion | null {
