@@ -96,6 +96,18 @@ export class StorageManager {
     this.saveData(data);
   }
 
+  static resetAllProgress(): void {
+    if (typeof window === 'undefined') return;
+    const data = this.getData();
+    data.habits.forEach((h) => {
+      h.completions = [];
+    });
+    data.stats = { ...DEFAULT_STATS, habitCount: data.habits.length };
+    data.wakeSleepLog = [];
+    data.lastUpdated = new Date();
+    this.saveData(data);
+  }
+
   static addCompletion(habitId: string, completion: HabitCompletion): void {
     const data = this.getData();
     const habit = data.habits.find(h => h.id === habitId);

@@ -142,6 +142,19 @@
     75% { transform: translateX(2px); }
   }
 
+  @keyframes clock-ring {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    15% { transform: rotate(-12deg) scale(1.1); }
+    30% { transform: rotate(12deg) scale(1.1); }
+    45% { transform: rotate(-8deg) scale(1.05); }
+    60% { transform: rotate(8deg) scale(1.05); }
+    75% { transform: rotate(-4deg) scale(1.02); }
+  }
+
+  .animate-clock-ring {
+    animation: clock-ring 1.5s ease-in-out infinite;
+  }
+
   @keyframes slide-in-up {
     from {
       opacity: 0;

@@ -5,6 +5,7 @@ import { useState, useRef } from 'react';
 import { FireSparkEffect } from './FireSparkEffect';
 import { CelebrationEffect } from './CelebrationEffect';
 import { CompletionProofModal } from './CompletionProofModal';
+import { CompletionDetailsModal } from './CompletionDetailsModal';
 
 interface TaskCardProps {
   habit: Habit;
@@ -13,6 +14,8 @@ interface TaskCardProps {
   onShowDetails: (habit: Habit) => void;
   onToggleStar?: (habitId: string) => void;
   onRequestComplete?: (habitId: string, notes: string) => void;
+  isOverdue?: boolean;
+  showReminderClock?: boolean;
 }
 
 export function TaskCard({
@@ -22,6 +25,8 @@ export function TaskCard({
   onShowDetails,
   onToggleStar,
   onRequestComplete,
+  isOverdue = false,
+  showReminderClock = false,
 }: TaskCardProps) {
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState('');
@@ -29,9 +34,10 @@ export function TaskCard({
   const [celebrateEffect, setCelebrateEffect] = useState(false);
   const [effectPos, setEffectPos] = useState({ x: 0, y: 0 });
   const [showProofModal, setShowProofModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const checkboxRef = useRef<HTMLInputElement>(null);
 
-  const triggerComplete = (proofImageUrl?: string) => {
+  const triggerComplete = (proofImageUrl?: string, notesOverride?: string) => {
     const rect = checkboxRef.current?.getBoundingClientRect();
     if (rect) {
       setEffectPos({
@@ -41,7 +47,7 @@ export function TaskCard({
     }
     setFireEffect(true);
     setCelebrateEffect(true);
-    onComplete(habit.id, notes, proofImageUrl);
+    onComplete(habit.id, notesOverride ?? notes, proofImageUrl);
     setNotes('');
     setShowNotes(false);
     setShowProofModal(false);
@@ -55,8 +61,8 @@ export function TaskCard({
     }
   };
 
-  const handleProofConfirm = (proofImageUrl: string) => {
-    triggerComplete(proofImageUrl);
+  const handleProofConfirm = (notesFromModal: string, proofImageUrl: string) => {
+    triggerComplete(proofImageUrl, notesFromModal);
   };
 
   const isCompleted = !!todayCompletion;
@@ -71,6 +77,13 @@ export function TaskCard({
           onCancel={() => setShowProofModal(false)}
         />
       )}
+      {showDetailsModal && todayCompletion && (
+        <CompletionDetailsModal
+          habit={habit}
+          completion={todayCompletion}
+          onClose={() => setShowDetailsModal(false)}
+        />
+      )}
       <FireSparkEffect
         isActive={fireEffect}
         x={effectPos.x}
@@ -82,7 +95,13 @@ export function TaskCard({
         onComplete={() => setCelebrateEffect(false)}
       />
 
-      <div className="bg-white rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow border-2 border-transparent hover:border-primary/20">
+      <div
+        className={`rounded-3xl p-5 shadow-sm hover:shadow-md transition-all border-2 ${
+          isOverdue
+            ? 'bg-destructive/5 border-destructive hover:border-destructive'
+            : 'bg-white border-transparent hover:border-primary/20'
+        }`}
+      >
         <div className="flex items-start gap-4">
           {/* Checkbox */}
           <div
@@ -153,7 +172,13 @@ export function TaskCard({
                   <span className="text-foreground/60 italic">"{todayCompletion.notes}"</span>
                 )}
                 {todayCompletion.proofImageUrl && (
-                  <img src={todayCompletion.proofImageUrl} alt="Proof" className="mt-1 w-12 h-12 rounded-lg object-cover border border-border" />
+                  <span className="shrink-0 inline-flex items-center justify-center w-5 h-5 rounded bg-muted text-foreground/70" title="Proof attached" aria-label="Proof attached">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <path d="M21 15l-5-5L5 21" />
+                    </svg>
+                  </span>
                 )}
               </div>
             )}
@@ -170,6 +195,19 @@ export function TaskCard({
             )}
           </div>
 
+          {/* Reminder clock (animated) */}
+          {showReminderClock && (
+            <div
+              className="flex-shrink-0 flex items-center justify-center w-8 h-8 text-foreground/80 animate-clock-ring"
+              title="Reminder set for today"
+              aria-hidden
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" d="M12 6v6l4 2" />
+              </svg>
+            </div>
+          )}
           {/* XP Badge */}
           <div className="flex-shrink-0 bg-primary rounded-full px-3 py-1 font-bold text-foreground text-sm">
             +{habit.xpReward}
@@ -197,7 +235,7 @@ export function TaskCard({
         {isCompleted && (
           <div className="mt-3 flex gap-2">
             <button
-              onClick={() => onShowDetails(habit)}
+              onClick={() => setShowDetailsModal(true)}
               className="flex-1 text-sm font-semibold py-2 px-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-foreground"
             >
               View Details

@@ -13,6 +13,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { AchievementToast, Achievement } from '@/components/AchievementToast';
 import { checkAchievements } from '@/lib/achievements';
 import { exportToCsv, downloadCsv, getExportFilename } from '@/lib/export';
+import { isOverdue as isHabitOverdue, showReminderClock } from '@/lib/utils';
+import {
+  requestNotificationPermission,
+  hasAskedNotificationPermission,
+  startNotificationScheduler,
+} from '@/lib/notificationScheduler';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 type View = 'dashboard' | 'quest' | 'calendar' | 'stats' | 'manage';
 
@@ -26,6 +35,10 @@ export default function Home() {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [showSleepModal, setShowSleepModal] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [filterHideAccomplished, setFilterHideAccomplished] = useState(false);
+  const [filterPriorityOrder, setFilterPriorityOrder] = useState(false);
+  const [filterMissedOnly, setFilterMissedOnly] = useState(false);
 
   useEffect(() => {
     // Load data on mount
@@ -33,6 +46,27 @@ export default function Home() {
     setAppData(data);
     setIsLoading(false);
   }, []);
+
+  // Notification permission and scheduler when dashboard is active
+  useEffect(() => {
+    if (view !== 'dashboard' || !appData) return;
+
+    const hasReminderOrDue = appData.habits.some(
+      (h) => h.reminderAt || h.dueDate || (h.recurrence === 'custom' && h.customDueDateTime)
+    );
+    if (
+      hasReminderOrDue &&
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      Notification.permission === 'default' &&
+      !hasAskedNotificationPermission()
+    ) {
+      requestNotificationPermission();
+    }
+
+    const stop = startNotificationScheduler();
+    return stop;
+  }, [view, appData]);
 
   if (isLoading || !appData) {
     return (
@@ -185,6 +219,61 @@ export default function Home() {
             </p>
           )}
 
+          {/* Filter */}
+          {appData.habits.length > 0 && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="w-full py-2.5 px-4 rounded-2xl border-2 border-primary/20 bg-white shadow-sm font-semibold text-foreground hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span aria-hidden>🔽</span>
+                  Filter
+                  {(filterHideAccomplished || filterPriorityOrder || filterMissedOnly) && (
+                    <span className="text-xs bg-primary/20 text-foreground rounded-full px-2 py-0.5">
+                      {[filterHideAccomplished, filterPriorityOrder, filterMissedOnly].filter(Boolean).length}
+                    </span>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72" align="start">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-sm">Dashboard filters</h4>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor="filter-hide-done" className="text-sm cursor-pointer flex-1">
+                      Hide accomplished
+                    </Label>
+                    <Switch
+                      id="filter-hide-done"
+                      checked={filterHideAccomplished}
+                      onCheckedChange={setFilterHideAccomplished}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor="filter-priority" className="text-sm cursor-pointer flex-1">
+                      Priority order (starred first)
+                    </Label>
+                    <Switch
+                      id="filter-priority"
+                      checked={filterPriorityOrder}
+                      onCheckedChange={setFilterPriorityOrder}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Label htmlFor="filter-missed" className="text-sm cursor-pointer flex-1">
+                      Missed deadlines only
+                    </Label>
+                    <Switch
+                      id="filter-missed"
+                      checked={filterMissedOnly}
+                      onCheckedChange={setFilterMissedOnly}
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+
           {/* Tasks */}
           {appData.habits.length === 0 ? (
             <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl p-8 text-center border-2 border-dashed border-primary/30">
@@ -203,26 +292,48 @@ export default function Home() {
                 <p className="text-xs text-foreground/50">Tip: Higher XP values are great for challenging habits!</p>
               </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {[...appData.habits]
-                .sort((a, b) => (b.isStarred ? 1 : 0) - (a.isStarred ? 1 : 0))
-                .map(habit => (
-                  <TaskCard
-                    key={habit.id}
-                    habit={habit}
-                    todayCompletion={getTodayCompletion(habit)}
-                    onComplete={handleCompleteHabit}
-                    onShowDetails={() => {
-                      setSelectedHabit(habit);
-                      setView('calendar');
-                    }}
-                    onToggleStar={handleToggleStar}
-                    onRequestComplete={() => {}}
-                  />
-                ))}
-            </div>
-          )}
+          ) : (() => {
+              let list = [...appData.habits];
+              if (filterHideAccomplished) {
+                list = list.filter((h) => !getTodayCompletion(h));
+              }
+              if (filterMissedOnly) {
+                list = list.filter((h) =>
+                  isHabitOverdue(h, { todayCompletion: getTodayCompletion(h) })
+                );
+              }
+              if (filterPriorityOrder) {
+                list.sort((a, b) => (b.isStarred ? 1 : 0) - (a.isStarred ? 1 : 0));
+              } else {
+                list.sort(
+                  (a, b) =>
+                    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                );
+              }
+              return (
+                <div className="space-y-4">
+                  {list.map((habit) => {
+                    const todayCompletion = getTodayCompletion(habit);
+                    return (
+                      <TaskCard
+                        key={habit.id}
+                        habit={habit}
+                        todayCompletion={todayCompletion}
+                        onComplete={handleCompleteHabit}
+                        onShowDetails={() => {
+                          setSelectedHabit(habit);
+                          setView('calendar');
+                        }}
+                        onToggleStar={handleToggleStar}
+                        onRequestComplete={() => {}}
+                        isOverdue={isHabitOverdue(habit, { todayCompletion })}
+                        showReminderClock={showReminderClock(habit, { todayCompletion })}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })()}
 
           {appData.habits.length > 0 && (
             <button
@@ -636,7 +747,47 @@ export default function Home() {
               Export downloaded
             </p>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowResetModal(true)}
+            className="w-full py-4 rounded-3xl border-2 border-destructive/50 bg-white shadow-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            Reset all progress
+          </button>
         </div>
+
+        {/* Reset progress confirmation modal */}
+        {showResetModal && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-background rounded-3xl w-full max-w-sm p-6 shadow-lg border-2 border-destructive/20">
+              <h2 className="text-lg font-bold text-foreground">Reset all progress?</h2>
+              <p className="mt-3 text-sm text-foreground/80">
+                This will clear all completions, XP, streaks, and league. Your habits will remain. This cannot be undone.
+              </p>
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="flex-1 py-3 rounded-xl font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    StorageManager.resetAllProgress();
+                    setAppData(StorageManager.getData());
+                    setShowResetModal(false);
+                  }}
+                  className="flex-1 py-3 rounded-xl font-semibold bg-destructive text-white hover:bg-destructive/90 transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Edit Habit Modal */}
         {showAddHabit && selectedHabit && (
