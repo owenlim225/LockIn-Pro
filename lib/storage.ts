@@ -1,6 +1,7 @@
 import { AppData, Habit, HabitCompletion, UserStats, League } from './types';
 
-const STORAGE_KEY = 'quest-tracker-data';
+const STORAGE_KEY = 'lockin-pro-data';
+const LEGACY_STORAGE_KEY = 'quest-tracker-data';
 
 const DEFAULT_STATS: UserStats = {
   totalXP: 0,
@@ -21,7 +22,15 @@ export class StorageManager {
   static getData(): AppData {
     if (typeof window === 'undefined') return DEFAULT_DATA;
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      let data = localStorage.getItem(STORAGE_KEY);
+      if (!data) {
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacy) {
+          localStorage.setItem(STORAGE_KEY, legacy);
+          localStorage.removeItem(LEGACY_STORAGE_KEY);
+          data = legacy;
+        }
+      }
       if (!data) return DEFAULT_DATA;
       
       const parsed = JSON.parse(data);

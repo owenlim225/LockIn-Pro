@@ -1,11 +1,11 @@
-# Quest Tracker - Duolingo-Inspired Habit Tracker
+# LockIn Pro - Duolingo-Inspired Habit Tracker
 
-A playful, gamified daily habit tracking application with a Duolingo-inspired yellow/green design system. Track your daily quests, earn XP, climb league tiers, and maintain streaks with satisfying micro-animations.
+A playful, gamified daily habit tracking application with a Duolingo-inspired yellow/green design system. LockIn Pro helps you track daily habits, earn XP, climb league tiers, and maintain streaks with satisfying micro-animations.
 
 ## Features
 
 ### Core Tracking
-- **Daily Quest Dashboard** - View all habits with today's completion status
+- **LockIn Pro Dashboard** - View all habits with today's completion status
 - **Task Cards** - Rounded card-based habit elements with radio-button style checkboxes
 - **Auto-Populated Timestamps** - Automatic completion time recording
 - **Notes/Reflections** - Add personal notes when completing habits
@@ -37,7 +37,7 @@ A playful, gamified daily habit tracking application with a Duolingo-inspired ye
 
 ## Data Storage
 
-All data is stored in browser localStorage, making it completely private and offline-capable. Data includes:
+All data is stored in browser localStorage under key `lockin-pro-data`, making it completely private and offline-capable. On first load after the rename, existing data from the legacy key `quest-tracker-data` is migrated automatically. Data includes:
 - Habits (title, description, XP value, icon, recurrence, color)
 - Completions (timestamp, notes, XP earned)
 - User stats (total XP, streaks, league tier)

@@ -34,7 +34,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="text-5xl mb-4">⭐</div>
-          <h1 className="text-2xl font-bold">Quest Tracker</h1>
+          <h1 className="text-2xl font-bold">LockIn Pro</h1>
           <p className="text-foreground/60 mt-2">Loading your adventure...</p>
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function Home() {
         {/* Header */}
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-black text-foreground">Daily Quest</h1>
+            <h1 className="text-3xl font-black text-foreground">LockIn Pro</h1>
             <p className="text-sm text-foreground/60 mt-1">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </p>
@@ -118,9 +118,9 @@ export default function Home() {
           {appData.habits.length === 0 ? (
             <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl p-8 text-center border-2 border-dashed border-primary/30">
               <div className="text-6xl mb-4 animate-bounce">🚀</div>
-              <h2 className="text-2xl font-bold mb-2">Welcome to Quest Tracker</h2>
+              <h2 className="text-2xl font-bold mb-2">Welcome to LockIn Pro</h2>
               <p className="text-foreground/60 mb-6 max-w-sm mx-auto">
-                Your personal habit tracking adventure awaits. Create your first quest to begin earning XP and climbing the leagues!
+                Your personal habit tracking adventure awaits. Create your first habit to begin earning XP and climbing the leagues!
               </p>
               <div className="flex flex-col gap-3">
                 <button
@@ -220,14 +220,14 @@ export default function Home() {
         <div className="sticky top-0 z-40 bg-gradient-to-b from-background to-background/80 backdrop-blur-sm p-4">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-black text-foreground">Quest Path</h1>
-            <p className="text-sm text-foreground/60 mt-1">Complete your daily quests</p>
+            <p className="text-sm text-foreground/60 mt-1">Complete your daily habits</p>
           </div>
         </div>
 
         <div className="max-w-2xl mx-auto px-4 py-8">
           {appData.habits.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-foreground/60">No quests yet. Create some habits to get started!</p>
+              <p className="text-foreground/60">No habits yet. Create some habits to get started!</p>
               <button
                 onClick={() => {
                   setShowAddHabit(true);

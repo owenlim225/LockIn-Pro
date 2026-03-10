@@ -7,8 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Quest Tracker - Daily Habit Tracker',
-  description: 'Track your daily habits with gamification, streaks, leagues, and achievements. A Duolingo-inspired habit tracking app.',
+  title: 'LockIn Pro - Daily Habit Tracker',
+  description: 'LockIn Pro helps you track daily habits with gamification, streaks, leagues, and achievements. A Duolingo-inspired habit tracking app.',
   generator: 'v0.app',
   icons: {
     icon: [
