@@ -54,4 +54,6 @@ export interface AppData {
   stats: UserStats;
   lastUpdated: Date;
   wakeSleepLog: WakeSleepRecord[];
+  /** Optional order of habit ids for dashboard list. When set, list is sorted by this order. */
+  habitOrder?: string[];
 }

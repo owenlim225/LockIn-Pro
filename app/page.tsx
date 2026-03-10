@@ -22,6 +22,33 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableTaskCard } from '@/components/SortableTaskCard';
 
 type View = 'dashboard' | 'quest' | 'calendar' | 'stats' | 'manage';
 
@@ -40,6 +67,11 @@ export default function Home() {
   const [filterHideAccomplished, setFilterHideAccomplished] = useState(false);
   const [filterPriorityOrder, setFilterPriorityOrder] = useState(false);
   const [filterMissedOnly, setFilterMissedOnly] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
 
   useEffect(() => {
     // Load data on mount
@@ -164,8 +196,9 @@ export default function Home() {
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           {/* Wake UP / Sleep buttons */}
           <div className="grid grid-cols-2 gap-3">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => {
                 const now = new Date();
                 StorageManager.setWakeTime(now, now);
@@ -173,46 +206,47 @@ export default function Home() {
                 setFeedbackMessage('Wake time recorded');
                 setTimeout(() => setFeedbackMessage(null), 3000);
               }}
-              className="py-4 px-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors text-center"
+              className="py-4 px-4 rounded-3xl border-2 border-primary/30 h-auto flex flex-col items-center gap-1 font-bold transition-all active:scale-[0.98]"
             >
-              <span className="block text-2xl mb-1">☀️</span>
+              <span className="text-2xl">☀️</span>
               Wake UP
               {(() => {
                 const rec = StorageManager.getWakeSleepForDate(new Date());
                 if (rec.wakeTime) {
                   return (
-                    <span className="block text-xs font-normal text-foreground/60 mt-1">
+                    <span className="text-xs font-normal text-muted-foreground">
                       {new Date(rec.wakeTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                     </span>
                   );
                 }
                 return null;
               })()}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
               onClick={() => {
                 const now = new Date();
                 StorageManager.setSleepTime(now, now);
                 setAppData(StorageManager.getData());
                 setShowSleepModal(true);
               }}
-              className="py-4 px-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors text-center"
+              className="py-4 px-4 rounded-3xl border-2 border-primary/30 h-auto flex flex-col items-center gap-1 font-bold transition-all active:scale-[0.98]"
             >
-              <span className="block text-2xl mb-1">🌙</span>
+              <span className="text-2xl">🌙</span>
               Sleep
               {(() => {
                 const rec = StorageManager.getWakeSleepForDate(new Date());
                 if (rec.sleepTime) {
                   return (
-                    <span className="block text-xs font-normal text-foreground/60 mt-1">
+                    <span className="text-xs font-normal text-muted-foreground">
                       {new Date(rec.sleepTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                     </span>
                   );
                 }
                 return null;
               })()}
-            </button>
+            </Button>
           </div>
           {feedbackMessage && (
             <p className="text-sm text-secondary font-medium text-center animate-in fade-in" role="status">
@@ -222,22 +256,36 @@ export default function Home() {
 
           {/* Filter */}
           {appData.habits.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="w-full py-2.5 px-4 rounded-2xl border-2 border-primary/20 bg-white shadow-sm font-semibold text-foreground hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
-                >
-                  <span aria-hidden>🔽</span>
-                  Filter
-                  {(filterHideAccomplished || filterPriorityOrder || filterMissedOnly) && (
-                    <span className="text-xs bg-primary/20 text-foreground rounded-full px-2 py-0.5">
-                      {[filterHideAccomplished, filterPriorityOrder, filterMissedOnly].filter(Boolean).length}
-                    </span>
-                  )}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72" align="start">
+            <div className="flex justify-end">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Dashboard filters"
+                    className="relative p-2.5 rounded-xl border-2 border-primary/20 bg-white shadow-sm text-foreground hover:bg-primary/5 transition-colors flex items-center justify-center"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5"
+                      aria-hidden
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M3 7C3 6.44772 3.44772 6 4 6H20C20.5523 6 21 6.44772 21 7C21 7.55228 20.5523 8 20 8H4C3.44772 8 3 7.55228 3 7ZM6 12C6 11.4477 6.44772 11 7 11H17C17.5523 11 18 11.4477 18 12C18 12.5523 17.5523 13 17 13H7C6.44772 13 6 12.5523 6 12ZM9 17C9 16.4477 9.44772 16 10 16H14C14.5523 16 15 16.4477 15 17C15 17.5523 14.5523 18 14 18H10C9.44772 18 9 17.5523 9 17Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {(filterHideAccomplished || filterPriorityOrder || filterMissedOnly) && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary/20 text-[10px] font-medium text-foreground">
+                        {[filterHideAccomplished, filterPriorityOrder, filterMissedOnly].filter(Boolean).length}
+                      </span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72" align="end">
                 <div className="space-y-4">
                   <h4 className="font-semibold text-sm">Dashboard filters</h4>
                   <div className="flex items-center justify-between gap-2">
@@ -273,6 +321,7 @@ export default function Home() {
                 </div>
               </PopoverContent>
             </Popover>
+            </div>
           )}
 
           {/* Tasks */}
@@ -284,17 +333,29 @@ export default function Home() {
                 Your personal habit tracking adventure awaits. Create your first habit to begin earning XP and climbing the leagues!
               </p>
               <div className="flex flex-col gap-3">
-                <button
+                <Button
                   onClick={() => setShowAddHabit(true)}
-                  className="px-6 py-3 rounded-full bg-secondary text-white font-bold hover:bg-secondary/90 transition-colors w-full sm:w-auto"
+                  variant="secondary"
+                  className="px-6 py-3 rounded-full w-full sm:w-auto font-bold transition-all active:scale-[0.98]"
                 >
                   Create First Habit
-                </button>
-                <p className="text-xs text-foreground/50">Tip: Higher XP values are great for challenging habits!</p>
+                </Button>
+                <p className="text-xs text-muted-foreground">Tip: Higher XP values are great for challenging habits!</p>
               </div>
             </div>
           ) : (() => {
               let list = [...appData.habits];
+              const order = appData.habitOrder?.length
+                ? appData.habitOrder
+                : appData.habits.map((h) => h.id);
+              list.sort((a, b) => {
+                const ia = order.indexOf(a.id);
+                const ib = order.indexOf(b.id);
+                if (ia === -1 && ib === -1) return 0;
+                if (ia === -1) return 1;
+                if (ib === -1) return -1;
+                return ia - ib;
+              });
               if (filterHideAccomplished) {
                 list = list.filter((h) => !getTodayCompletion(h));
               }
@@ -303,51 +364,79 @@ export default function Home() {
                   isHabitOverdue(h, { todayCompletion: getTodayCompletion(h) })
                 );
               }
-              if (filterPriorityOrder) {
-                list.sort((a, b) => (b.isStarred ? 1 : 0) - (a.isStarred ? 1 : 0));
-              } else {
-                list.sort(
-                  (a, b) =>
-                    new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                );
+              if (!appData.habitOrder?.length) {
+                if (filterPriorityOrder) {
+                  list.sort((a, b) => (b.isStarred ? 1 : 0) - (a.isStarred ? 1 : 0));
+                } else {
+                  list.sort(
+                    (a, b) =>
+                      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                  );
+                }
+              }
+              const visibleIds = list.map((h) => h.id);
+              function handleDragEnd(event: DragEndEvent) {
+                const { active, over } = event;
+                if (!over || active.id === over.id || !appData) return;
+                const oldIds = visibleIds;
+                const oldIndex = oldIds.indexOf(active.id as string);
+                const newIndex = oldIds.indexOf(over.id as string);
+                if (oldIndex === -1 || newIndex === -1) return;
+                const newOrder = arrayMove(oldIds, oldIndex, newIndex);
+                const fullOrder = appData.habitOrder ?? appData.habits.map((h) => h.id);
+                const rest = fullOrder.filter((id) => !oldIds.includes(id));
+                const newFullOrder = [...newOrder, ...rest];
+                const next = { ...appData, habitOrder: newFullOrder };
+                setAppData(next);
+                StorageManager.saveData(next);
               }
               return (
-                <div className="space-y-4">
-                  {list.map((habit) => {
-                    const todayCompletion = getTodayCompletion(habit);
-                    return (
-                      <TaskCard
-                        key={habit.id}
-                        habit={habit}
-                        todayCompletion={todayCompletion}
-                        onComplete={handleCompleteHabit}
-                        onShowDetails={() => {
-                          setSelectedHabit(habit);
-                          setView('calendar');
-                        }}
-                        onToggleStar={handleToggleStar}
-                        onRequestComplete={() => {}}
-                        isOverdue={isHabitOverdue(habit, { todayCompletion })}
-                        showReminderClock={showReminderClock(habit, { todayCompletion })}
-                      />
-                    );
-                  })}
-                </div>
+                <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                  <SortableContext
+                    items={visibleIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      {list.map((habit) => {
+                        const todayCompletion = getTodayCompletion(habit);
+                        return (
+                          <SortableTaskCard
+                            key={habit.id}
+                            habit={habit}
+                            todayCompletion={todayCompletion}
+                            onComplete={handleCompleteHabit}
+                            onShowDetails={() => {
+                              setSelectedHabit(habit);
+                              setView('calendar');
+                            }}
+                            onToggleStar={handleToggleStar}
+                            onRequestComplete={() => {}}
+                            isOverdue={isHabitOverdue(habit, { todayCompletion })}
+                            showReminderClock={showReminderClock(habit, {
+                              todayCompletion,
+                            })}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               );
             })()}
 
           {appData.habits.length > 0 && (
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowAddHabit(true)}
-              className="w-full py-4 rounded-3xl border-2 border-dashed border-primary font-bold text-foreground hover:bg-primary/5 transition-colors"
+              className="w-full py-4 rounded-3xl border-2 border-dashed border-primary h-auto font-bold transition-all active:scale-[0.98]"
             >
               + Add New Habit
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -356,64 +445,50 @@ export default function Home() {
               { id: 'stats', label: 'Stats', icon: '📊' },
               { id: 'manage', label: 'Manage', icon: '⚙️' },
             ].map(tab => (
-              <button
+              <Button
                 key={tab.id}
+                variant={view === tab.id ? 'default' : 'ghost'}
+                size="sm"
                 onClick={() => setView(tab.id as View)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-xs font-bold transition-all ${
-                  view === tab.id
-                    ? 'bg-primary text-foreground'
-                    : 'text-foreground/60 hover:bg-muted'
-                }`}
+                className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl h-auto text-xs font-bold transition-all active:scale-95"
               >
                 <span className="text-lg">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         {/* Ready for bed modal (after Sleep) */}
-        {showSleepModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-background rounded-3xl w-full max-w-sm p-6 shadow-lg border-2 border-primary/20">
-              <p className="text-center text-foreground font-medium">
-                Sleep time recorded. You can now lock or power off your phone.
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowSleepModal(false)}
-                className="mt-4 w-full py-3 rounded-xl bg-primary text-foreground font-bold hover:bg-primary/90"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        )}
+        <Dialog open={showSleepModal} onOpenChange={setShowSleepModal}>
+          <DialogContent className="sm:max-w-sm rounded-3xl border-2 border-primary/20">
+            <DialogHeader>
+              <DialogTitle className="sr-only">Sleep recorded</DialogTitle>
+            </DialogHeader>
+            <p className="text-center text-foreground font-medium">
+              Sleep time recorded. You can now lock or power off your phone.
+            </p>
+            <Button
+              onClick={() => setShowSleepModal(false)}
+              className="w-full"
+            >
+              OK
+            </Button>
+          </DialogContent>
+        </Dialog>
 
         {/* Add Habit Modal */}
-        {showAddHabit && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-            <div className="bg-background rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold">New Habit</h2>
-                <button
-                  onClick={() => setShowAddHabit(false)}
-                  className="p-2 hover:bg-muted rounded-lg"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="p-4">
-                <HabitForm
-                  onSubmit={handleAddHabit}
-                  onCancel={() => setShowAddHabit(false)}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        <Dialog open={showAddHabit && !selectedHabit} onOpenChange={(open) => !open && setShowAddHabit(false)}>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/20">
+            <DialogHeader>
+              <DialogTitle>New Habit</DialogTitle>
+            </DialogHeader>
+            <HabitForm
+              onSubmit={handleAddHabit}
+              onCancel={() => setShowAddHabit(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -432,15 +507,14 @@ export default function Home() {
         <div className="max-w-2xl mx-auto px-4 py-8">
           {appData.habits.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-foreground/60">No habits yet. Create some habits to get started!</p>
-              <button
-                onClick={() => {
-                  setShowAddHabit(true);
-                }}
-                className="mt-4 px-6 py-2 rounded-full bg-secondary text-white font-bold"
+              <p className="text-muted-foreground">No habits yet. Create some habits to get started!</p>
+              <Button
+                variant="secondary"
+                onClick={() => setShowAddHabit(true)}
+                className="mt-4 rounded-full font-bold transition-all active:scale-[0.98]"
               >
                 Add Habit
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="space-y-6">
@@ -461,7 +535,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -470,18 +544,16 @@ export default function Home() {
               { id: 'stats', label: 'Stats', icon: '📊' },
               { id: 'manage', label: 'Manage', icon: '⚙️' },
             ].map(tab => (
-              <button
+              <Button
                 key={tab.id}
+                variant={view === tab.id ? 'default' : 'ghost'}
+                size="sm"
                 onClick={() => setView(tab.id as View)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-xs font-bold transition-all ${
-                  view === tab.id
-                    ? 'bg-primary text-foreground'
-                    : 'text-foreground/60 hover:bg-muted'
-                }`}
+                className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl h-auto text-xs font-bold transition-all active:scale-95"
               >
                 <span className="text-lg">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -497,25 +569,28 @@ export default function Home() {
           <div className="max-w-2xl mx-auto flex items-center justify-between">
             <h1 className="text-3xl font-black text-foreground">Progress</h1>
             {selectedHabit && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setSelectedHabit(null)}
-                className="p-2 hover:bg-muted rounded-lg"
+                className="rounded-lg"
+                aria-label="Clear selection"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             )}
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="max-w-2xl mx-auto px-4 py-6 animate-in fade-in duration-300">
           {selectedHabit ? (
             <div className="space-y-6">
-              <div className="bg-white rounded-3xl p-6 shadow-sm border-2 border-primary/20">
+              <div className="bg-card rounded-3xl p-6 shadow-sm border-2 border-primary/20">
                 <h2 className="text-2xl font-bold">{selectedHabit.title}</h2>
                 {selectedHabit.description && (
-                  <p className="text-foreground/60 mt-2">{selectedHabit.description}</p>
+                  <p className="text-muted-foreground mt-2">{selectedHabit.description}</p>
                 )}
               </div>
               <HabitCalendar habit={selectedHabit} />
@@ -523,26 +598,29 @@ export default function Home() {
           ) : (
             <div className="space-y-4">
               {appData.habits.length === 0 ? (
-                <p className="text-center text-foreground/60 py-12">No habits to view</p>
+                <p className="text-center text-muted-foreground py-12">No habits to view</p>
               ) : (
                 appData.habits.map(habit => (
-                  <button
+                  <Button
                     key={habit.id}
+                    variant="outline"
                     onClick={() => setSelectedHabit(habit)}
-                    className="w-full text-left bg-white rounded-3xl p-4 shadow-sm hover:shadow-md transition-shadow border-2 border-primary/20 hover:border-primary/50"
+                    className="w-full justify-start h-auto py-4 rounded-3xl border-2 border-primary/20 hover:border-primary/50 transition-all active:scale-[0.98]"
                   >
-                    <h3 className="font-bold text-lg">{habit.title}</h3>
-                    <p className="text-sm text-foreground/60">
-                      {habit.completions.length} completions
-                    </p>
-                  </button>
+                    <div className="text-left w-full">
+                      <h3 className="font-bold text-lg">{habit.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {habit.completions.length} completions
+                      </p>
+                    </div>
+                  </Button>
                 ))
               )}
             </div>
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -551,18 +629,16 @@ export default function Home() {
               { id: 'stats', label: 'Stats', icon: '📊' },
               { id: 'manage', label: 'Manage', icon: '⚙️' },
             ].map(tab => (
-              <button
+              <Button
                 key={tab.id}
+                variant={view === tab.id ? 'default' : 'ghost'}
+                size="sm"
                 onClick={() => setView(tab.id as View)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-xs font-bold transition-all ${
-                  view === tab.id
-                    ? 'bg-primary text-foreground'
-                    : 'text-foreground/60 hover:bg-muted'
-                }`}
+                className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl h-auto text-xs font-bold transition-all active:scale-95"
               >
                 <span className="text-lg">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -581,21 +657,21 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 animate-in fade-in duration-300">
           <LeagueCard stats={appData.stats} />
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-3xl p-6 shadow-sm border-2 border-primary/20 text-center">
+            <div className="bg-card rounded-3xl p-6 shadow-sm border-2 border-primary/20 text-center">
               <p className="text-4xl font-black text-primary">{appData.stats.totalXP}</p>
-              <p className="text-sm text-foreground/60 mt-2">Total XP</p>
+              <p className="text-sm text-muted-foreground mt-2">Total XP</p>
             </div>
-            <div className="bg-white rounded-3xl p-6 shadow-sm border-2 border-secondary/20 text-center">
+            <div className="bg-card rounded-3xl p-6 shadow-sm border-2 border-secondary/20 text-center">
               <p className="text-4xl font-black text-secondary">{appData.stats.currentStreak}</p>
-              <p className="text-sm text-foreground/60 mt-2">Current Streak</p>
+              <p className="text-sm text-muted-foreground mt-2">Current Streak</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 shadow-sm border-2 border-border">
+          <div className="bg-card rounded-3xl p-6 shadow-sm border-2 border-border">
             <h3 className="font-bold text-lg mb-4">Habit Performance</h3>
             <div className="space-y-3">
               {appData.habits.map(habit => {
@@ -623,8 +699,9 @@ export default function Home() {
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => {
               const data = StorageManager.getData();
               const csv = exportToCsv(data);
@@ -632,10 +709,10 @@ export default function Home() {
               setExportSuccess(true);
               setTimeout(() => setExportSuccess(false), 3000);
             }}
-            className="w-full py-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors"
+            className="w-full py-4 rounded-3xl border-2 border-primary/30 h-auto font-bold transition-all active:scale-[0.98]"
           >
             Export to Excel (CSV)
-          </button>
+          </Button>
           {exportSuccess && (
             <p className="text-sm text-secondary font-medium text-center" role="status">
               Export downloaded
@@ -643,7 +720,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -652,18 +729,16 @@ export default function Home() {
               { id: 'stats', label: 'Stats', icon: '📊' },
               { id: 'manage', label: 'Manage', icon: '⚙️' },
             ].map(tab => (
-              <button
+              <Button
                 key={tab.id}
+                variant={view === tab.id ? 'default' : 'ghost'}
+                size="sm"
                 onClick={() => setView(tab.id as View)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-xs font-bold transition-all ${
-                  view === tab.id
-                    ? 'bg-primary text-foreground'
-                    : 'text-foreground/60 hover:bg-muted'
-                }`}
+                className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl h-auto text-xs font-bold transition-all active:scale-95"
               >
                 <span className="text-lg">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -685,53 +760,56 @@ export default function Home() {
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
           {appData.habits.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-foreground/60">No habits yet</p>
-              <button
+              <p className="text-muted-foreground">No habits yet</p>
+              <Button
+                variant="secondary"
                 onClick={() => setShowAddHabit(true)}
-                className="mt-4 px-6 py-2 rounded-full bg-secondary text-white font-bold"
+                className="mt-4 rounded-full font-bold transition-all active:scale-[0.98]"
               >
                 Add Habit
-              </button>
+              </Button>
             </div>
           ) : (
             appData.habits.map(habit => (
-              <div key={habit.id} className="bg-white rounded-3xl p-4 shadow-sm border-2 border-primary/20">
+              <div key={habit.id} className="bg-card rounded-3xl p-4 shadow-sm border-2 border-primary/20 transition-shadow hover:shadow-md">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-bold text-lg">{habit.title}</h3>
                     {habit.description && (
-                      <p className="text-sm text-foreground/60">{habit.description}</p>
+                      <p className="text-sm text-muted-foreground">{habit.description}</p>
                     )}
                   </div>
                   <span className="text-2xl">+{habit.xpReward} XP</span>
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     onClick={() => {
                       setSelectedHabit(habit);
                       setShowAddHabit(true);
                     }}
-                    className="flex-1 py-2 px-3 rounded-xl bg-primary text-foreground font-semibold text-sm hover:bg-primary/90"
+                    className="flex-1 rounded-xl font-semibold text-sm transition-all active:scale-[0.98]"
                   >
                     Edit
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="destructive"
                     onClick={() => {
                       if (confirm('Delete this habit? All completions will be removed.')) {
                         handleDeleteHabit(habit.id);
                       }
                     }}
-                    className="flex-1 py-2 px-3 rounded-xl bg-destructive/20 text-destructive font-semibold text-sm hover:bg-destructive/30"
+                    className="flex-1 rounded-xl font-semibold text-sm bg-destructive/20 text-destructive hover:bg-destructive/30 border-0 transition-all active:scale-[0.98]"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))
           )}
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => {
               const data = StorageManager.getData();
               const csv = exportToCsv(data);
@@ -739,131 +817,104 @@ export default function Home() {
               setExportSuccess(true);
               setTimeout(() => setExportSuccess(false), 3000);
             }}
-            className="w-full py-4 rounded-3xl border-2 border-primary/30 bg-white shadow-sm font-bold text-foreground hover:bg-primary/10 transition-colors"
+            className="w-full py-4 rounded-3xl border-2 border-primary/30 h-auto font-bold transition-all active:scale-[0.98]"
           >
             Export to Excel (CSV)
-          </button>
+          </Button>
           {exportSuccess && (
             <p className="text-sm text-secondary font-medium text-center" role="status">
               Export downloaded
             </p>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setShowResetModal(true)}
-            className="w-full py-4 rounded-3xl border-2 border-destructive/50 bg-white shadow-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
+            className="w-full py-4 rounded-3xl border-2 border-destructive/50 h-auto font-bold text-destructive hover:bg-destructive/10 transition-all active:scale-[0.98]"
           >
             Reset all progress
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setShowDeleteAllModal(true)}
-            className="w-full py-4 rounded-3xl border-2 border-destructive/50 bg-white shadow-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
+            className="w-full py-4 rounded-3xl border-2 border-destructive/50 h-auto font-bold text-destructive hover:bg-destructive/10 transition-all active:scale-[0.98]"
           >
             Delete all habits
-          </button>
+          </Button>
         </div>
 
         {/* Reset progress confirmation modal */}
-        {showResetModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-background rounded-3xl w-full max-w-sm p-6 shadow-lg border-2 border-destructive/20">
-              <h2 className="text-lg font-bold text-foreground">Reset all progress?</h2>
-              <p className="mt-3 text-sm text-foreground/80">
+        <AlertDialog open={showResetModal} onOpenChange={setShowResetModal}>
+          <AlertDialogContent className="rounded-3xl border-2 border-destructive/20">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reset all progress?</AlertDialogTitle>
+              <AlertDialogDescription>
                 This will clear all completions, XP, streaks, and league. Your habits will remain. This cannot be undone.
-              </p>
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowResetModal(false)}
-                  className="flex-1 py-3 rounded-xl font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    StorageManager.resetAllProgress();
-                    setAppData(StorageManager.getData());
-                    setShowResetModal(false);
-                  }}
-                  className="flex-1 py-3 rounded-xl font-semibold bg-destructive text-white hover:bg-destructive/90 transition-colors"
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex gap-3 sm:gap-2">
+              <AlertDialogCancel className="flex-1 rounded-xl">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  StorageManager.resetAllProgress();
+                  setAppData(StorageManager.getData());
+                }}
+                className="flex-1 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Reset
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Delete all habits confirmation modal */}
-        {showDeleteAllModal && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-background rounded-3xl w-full max-w-sm p-6 shadow-lg border-2 border-destructive/20">
-              <h2 className="text-lg font-bold text-foreground">Delete all habits?</h2>
-              <p className="mt-3 text-sm text-foreground/80">
+        <AlertDialog open={showDeleteAllModal} onOpenChange={setShowDeleteAllModal}>
+          <AlertDialogContent className="rounded-3xl border-2 border-destructive/20">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete all habits?</AlertDialogTitle>
+              <AlertDialogDescription>
                 This will remove every habit and all their completions. Your XP, streaks, and league will be reset. This cannot be undone.
-              </p>
-              <div className="mt-6 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteAllModal(false)}
-                  className="flex-1 py-3 rounded-xl font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    StorageManager.deleteAllHabits();
-                    setAppData(StorageManager.getData());
-                    setSelectedHabit(null);
-                    setShowDeleteAllModal(false);
-                  }}
-                  className="flex-1 py-3 rounded-xl font-semibold bg-destructive text-white hover:bg-destructive/90 transition-colors"
-                >
-                  Delete all
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex gap-3 sm:gap-2">
+              <AlertDialogCancel className="flex-1 rounded-xl">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  StorageManager.deleteAllHabits();
+                  setAppData(StorageManager.getData());
+                  setSelectedHabit(null);
+                }}
+                className="flex-1 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete all
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Edit Habit Modal */}
-        {showAddHabit && selectedHabit && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-            <div className="bg-background rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold">Edit Habit</h2>
-                <button
-                  onClick={() => {
-                    setShowAddHabit(false);
-                    setSelectedHabit(null);
-                  }}
-                  className="p-2 hover:bg-muted rounded-lg"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="p-4">
-                <HabitForm
-                  initialHabit={selectedHabit}
-                  onSubmit={handleUpdateHabit}
-                  onCancel={() => {
-                    setShowAddHabit(false);
-                    setSelectedHabit(null);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+        <Dialog open={!!(showAddHabit && selectedHabit)} onOpenChange={(open) => { if (!open) { setShowAddHabit(false); setSelectedHabit(null); } }}>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/20">
+            <DialogHeader>
+              <DialogTitle>Edit Habit</DialogTitle>
+            </DialogHeader>
+            {selectedHabit && (
+              <HabitForm
+                initialHabit={selectedHabit}
+                onSubmit={handleUpdateHabit}
+                onCancel={() => {
+                  setShowAddHabit(false);
+                  setSelectedHabit(null);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-border shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
           <div className="max-w-2xl mx-auto flex gap-1 p-2">
             {[
               { id: 'dashboard', label: 'Daily', icon: '📋' },
@@ -872,18 +923,16 @@ export default function Home() {
               { id: 'stats', label: 'Stats', icon: '📊' },
               { id: 'manage', label: 'Manage', icon: '⚙️' },
             ].map(tab => (
-              <button
+              <Button
                 key={tab.id}
+                variant={view === tab.id ? 'default' : 'ghost'}
+                size="sm"
                 onClick={() => setView(tab.id as View)}
-                className={`flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl text-xs font-bold transition-all ${
-                  view === tab.id
-                    ? 'bg-primary text-foreground'
-                    : 'text-foreground/60 hover:bg-muted'
-                }`}
+                className="flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-xl h-auto text-xs font-bold transition-all active:scale-95"
               >
                 <span className="text-lg">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>

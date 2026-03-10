@@ -6,6 +6,8 @@ import { FireSparkEffect } from './FireSparkEffect';
 import { CelebrationEffect } from './CelebrationEffect';
 import { CompletionProofModal } from './CompletionProofModal';
 import { CompletionDetailsModal } from './CompletionDetailsModal';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 interface TaskCardProps {
   habit: Habit;
@@ -95,11 +97,11 @@ export function TaskCard({
         onComplete={() => setCelebrateEffect(false)}
       />
 
-      <div
-        className={`rounded-3xl p-5 shadow-sm hover:shadow-md transition-all border-2 ${
+      <Card
+        className={`rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-200 border-2 active:scale-[0.995] ${
           isOverdue
             ? 'bg-destructive/5 border-destructive hover:border-destructive'
-            : 'bg-white border-transparent hover:border-primary/20'
+            : 'bg-card border-transparent hover:border-primary/20'
         }`}
       >
         <div className="flex items-start gap-4">
@@ -127,18 +129,20 @@ export function TaskCard({
                 {habit.title}
               </h3>
               {onToggleStar && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={(e) => { e.stopPropagation(); onToggleStar(habit.id); }}
-                  className="p-1 rounded hover:bg-muted transition-colors"
+                  className="rounded shrink-0 transition-colors"
                   aria-label={isStarred ? 'Unstar' : 'Star'}
                 >
                   {isStarred ? (
                     <span className="text-primary text-lg">★</span>
                   ) : (
-                    <span className="text-foreground/40 text-lg">☆</span>
+                    <span className="text-muted-foreground text-lg">☆</span>
                   )}
-                </button>
+                </Button>
               )}
             </div>
             {habit.description && (
@@ -217,32 +221,35 @@ export function TaskCard({
         {/* Action Buttons */}
         {!isCompleted && (
           <div className="mt-4 flex gap-2">
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowNotes(!showNotes)}
-              className="flex-1 text-sm font-semibold py-2 px-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-foreground"
+              className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
             >
               {showNotes ? 'Cancel' : 'Add Note'}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="secondary"
               onClick={handleCompleteClick}
-              className="flex-1 text-sm font-semibold py-2 px-3 rounded-xl bg-secondary hover:bg-secondary/90 text-white transition-colors"
+              className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
             >
               Mark Done
-            </button>
+            </Button>
           </div>
         )}
 
         {isCompleted && (
           <div className="mt-3 flex gap-2">
-            <button
+            <Button
+              variant="outline"
               onClick={() => setShowDetailsModal(true)}
-              className="flex-1 text-sm font-semibold py-2 px-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-foreground"
+              className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
             >
               View Details
-            </button>
+            </Button>
           </div>
         )}
-      </div>
+      </Card>
     </>
   );
 }

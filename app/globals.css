@@ -30,6 +30,11 @@
   --chart-4: #4dabf7;
   --chart-5: #ffa94d;
   --radius: 1.5rem;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --ease-out: ease-out;
+  --ease-in-out: ease-in-out;
   --sidebar: #f8f6f0;
   --sidebar-foreground: #1a1a1a;
   --sidebar-primary: #ffd700;
@@ -186,4 +191,23 @@
   .animate-slide-up {
     animation: slide-in-up 0.4s ease-out;
   }
+
+  @keyframes tap {
+    0% { transform: scale(1); }
+    100% { transform: scale(0.98); }
+  }
+
+  .animate-tap {
+    animation: tap var(--duration-fast) var(--ease-out) forwards;
+  }
+
+  .tap-press:active {
+    transform: scale(0.98);
+  }
+
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
 }
