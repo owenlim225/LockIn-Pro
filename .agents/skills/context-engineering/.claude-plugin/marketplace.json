@@ -1,0 +1,20 @@
+{
+  "name": "context-engineering",
+  "owner": {
+    "name": "JustineDevs",
+    "email": "tradergofficial@gmail.com"
+  },
+  "metadata": {
+    "description": "Context Engineering skill: Skeleton-of-Thought, token-efficient diff updates, XML tagging, symbolic variables, negative constraints, and LLMBundle-style context packaging for AI development.",
+    "pluginRoot": "."
+  },
+  "plugins": [
+    {
+      "name": "context-engineering",
+      "source": ".",
+      "description": "Context Engineering for AI development: how to structure prompts with Skeleton-of-Thought, diff-style updates, XML tags, symbolic rule blocks, and negative constraints, plus guidance for LLMBundle as a context manager.",
+      "category": "Prompt Engineering"
+    }
+  ]
+}
+
