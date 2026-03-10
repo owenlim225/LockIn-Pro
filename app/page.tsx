@@ -67,6 +67,7 @@ export default function Home() {
   const [filterHideAccomplished, setFilterHideAccomplished] = useState(false);
   const [filterPriorityOrder, setFilterPriorityOrder] = useState(false);
   const [filterMissedOnly, setFilterMissedOnly] = useState(false);
+  const [showBadHabitsOnly, setShowBadHabitsOnly] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -74,9 +75,9 @@ export default function Home() {
   );
 
   useEffect(() => {
-    // Load data on mount
     const data = StorageManager.getData();
-    setAppData(data);
+    StorageManager.runBadHabitSettlement(data);
+    setAppData(StorageManager.getData());
     setIsLoading(false);
   }, []);
 
@@ -174,7 +175,7 @@ export default function Home() {
   // Dashboard View
   if (view === 'dashboard') {
     return (
-      <div className="min-h-screen bg-background pb-24">
+      <div className={`min-h-screen pb-24 ${showBadHabitsOnly ? 'bg-neutral-900 text-neutral-100' : 'bg-background'}`}>
         <AchievementToast 
           achievement={currentAchievement}
           onComplete={() => setCurrentAchievement(null)}
@@ -254,9 +255,20 @@ export default function Home() {
             </p>
           )}
 
-          {/* Filter */}
+          {/* Bad habit toggle + Filter */}
           {appData.habits.length > 0 && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant={showBadHabitsOnly ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowBadHabitsOnly((v) => !v)}
+                className="rounded-xl border-2 border-primary/20 font-semibold transition-all active:scale-[0.98]"
+                aria-pressed={showBadHabitsOnly}
+                aria-label={showBadHabitsOnly ? 'Show good habits' : 'Show bad habits'}
+              >
+                Bad habits
+              </Button>
               <Popover>
                 <PopoverTrigger asChild>
                   <button
@@ -325,26 +337,43 @@ export default function Home() {
           )}
 
           {/* Tasks */}
-          {appData.habits.length === 0 ? (
+          {(showBadHabitsOnly ? appData.habits.filter((h) => h.isBadHabit) : appData.habits.filter((h) => !h.isBadHabit)).length === 0 ? (
             <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl p-8 text-center border-2 border-dashed border-primary/30">
-              <div className="text-6xl mb-4 animate-bounce">🚀</div>
-              <h2 className="text-2xl font-bold mb-2">Welcome to LockIn Pro</h2>
-              <p className="text-foreground/60 mb-6 max-w-sm mx-auto">
-                Your personal habit tracking adventure awaits. Create your first habit to begin earning XP and climbing the leagues!
-              </p>
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={() => setShowAddHabit(true)}
-                  variant="secondary"
-                  className="px-6 py-3 rounded-full w-full sm:w-auto font-bold transition-all active:scale-[0.98]"
-                >
-                  Create First Habit
-                </Button>
-                <p className="text-xs text-muted-foreground">Tip: Higher XP values are great for challenging habits!</p>
-              </div>
+              {showBadHabitsOnly ? (
+                <>
+                  <div className="text-6xl mb-4">🌙</div>
+                  <h2 className="text-2xl font-bold mb-2">No bad habits yet</h2>
+                  <p className="text-foreground/60 mb-6 max-w-sm mx-auto">
+                    Add habits you want to avoid. Don&apos;t complete them by end of day to earn XP.
+                  </p>
+                  <Button
+                    onClick={() => setShowAddHabit(true)}
+                    variant="secondary"
+                    className="px-6 py-3 rounded-full w-full sm:w-auto font-bold transition-all active:scale-[0.98]"
+                  >
+                    Add bad habit
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="text-6xl mb-4 animate-bounce">🚀</div>
+                  <h2 className="text-2xl font-bold mb-2">Welcome to LockIn Pro</h2>
+                  <p className="text-foreground/60 mb-6 max-w-sm mx-auto">
+                    Your personal habit tracking adventure awaits. Create your first habit to begin earning XP and climbing the leagues!
+                  </p>
+                  <Button
+                    onClick={() => setShowAddHabit(true)}
+                    variant="secondary"
+                    className="px-6 py-3 rounded-full w-full sm:w-auto font-bold transition-all active:scale-[0.98]"
+                  >
+                    Create First Habit
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-3">Tip: Higher XP values are great for challenging habits!</p>
+                </>
+              )}
             </div>
           ) : (() => {
-              let list = [...appData.habits];
+              let list = appData.habits.filter((h) => (showBadHabitsOnly ? h.isBadHabit : !h.isBadHabit));
               const order = appData.habitOrder?.length
                 ? appData.habitOrder
                 : appData.habits.map((h) => h.id);
@@ -424,13 +453,13 @@ export default function Home() {
               );
             })()}
 
-          {appData.habits.length > 0 && (
+          {(showBadHabitsOnly ? appData.habits.some((h) => h.isBadHabit) : appData.habits.some((h) => !h.isBadHabit)) && (
             <Button
               variant="outline"
               onClick={() => setShowAddHabit(true)}
               className="w-full py-4 rounded-3xl border-2 border-dashed border-primary h-auto font-bold transition-all active:scale-[0.98]"
             >
-              + Add New Habit
+              + Add {showBadHabitsOnly ? 'Bad' : 'New'} Habit
             </Button>
           )}
         </div>
@@ -480,9 +509,13 @@ export default function Home() {
         {/* Add Habit Modal */}
         <Dialog open={showAddHabit && !selectedHabit} onOpenChange={(open) => !open && setShowAddHabit(false)}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/20">
+            <DialogHeader>
+              <DialogTitle className="sr-only">Add habit</DialogTitle>
+            </DialogHeader>
             <HabitForm
               onSubmit={handleAddHabit}
               onCancel={() => setShowAddHabit(false)}
+              defaultBadHabit={showBadHabitsOnly}
             />
           </DialogContent>
         </Dialog>
@@ -895,6 +928,9 @@ export default function Home() {
         {/* Edit Habit Modal */}
         <Dialog open={!!(showAddHabit && selectedHabit)} onOpenChange={(open) => { if (!open) { setShowAddHabit(false); setSelectedHabit(null); } }}>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-2 border-primary/20">
+            <DialogHeader>
+              <DialogTitle className="sr-only">Edit habit</DialogTitle>
+            </DialogHeader>
             {selectedHabit && (
               <HabitForm
                 initialHabit={selectedHabit}

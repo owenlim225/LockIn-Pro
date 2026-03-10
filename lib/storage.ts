@@ -17,6 +17,7 @@ const DEFAULT_DATA: AppData = {
   stats: DEFAULT_STATS,
   lastUpdated: new Date(),
   wakeSleepLog: [],
+  badHabitCredits: [],
 };
 
 export class StorageManager {
@@ -40,6 +41,7 @@ export class StorageManager {
         wakeTime: r.wakeTime ? new Date(r.wakeTime) : null,
         sleepTime: r.sleepTime ? new Date(r.sleepTime) : null,
       }));
+      const badHabitCredits = parsed.badHabitCredits ?? [];
       return {
         ...parsed,
         habits: parsed.habits.map((h: any) => ({
@@ -59,6 +61,7 @@ export class StorageManager {
         },
         lastUpdated: new Date(parsed.lastUpdated),
         wakeSleepLog,
+        badHabitCredits,
       };
     } catch {
       return DEFAULT_DATA;
@@ -104,6 +107,7 @@ export class StorageManager {
     });
     data.stats = { ...DEFAULT_STATS, habitCount: data.habits.length };
     data.wakeSleepLog = [];
+    data.badHabitCredits = [];
     data.lastUpdated = new Date();
     this.saveData(data);
   }
@@ -113,6 +117,7 @@ export class StorageManager {
     const data = this.getData();
     data.habits = [];
     data.stats = { ...DEFAULT_STATS, habitCount: 0 };
+    data.badHabitCredits = [];
     data.lastUpdated = new Date();
     this.saveData(data);
   }
@@ -121,16 +126,16 @@ export class StorageManager {
     const data = this.getData();
     const habit = data.habits.find(h => h.id === habitId);
     if (habit) {
-      habit.completions.push(completion);
-      data.stats.totalXP += completion.xpEarned;
-      data.stats.lastCompletionDate = completion.completedAt;
-      
-      // Update league based on XP
+      const completionToStore = { ...completion };
+      if (habit.isBadHabit) {
+        completionToStore.xpEarned = -habit.xpReward;
+      }
+      habit.completions.push(completionToStore);
+      data.stats.totalXP += completionToStore.xpEarned;
+      data.stats.lastCompletionDate = completionToStore.completedAt;
+      data.stats.totalXP = Math.max(0, data.stats.totalXP);
       data.stats.league = this.calculateLeague(data.stats.totalXP);
-      
-      // Update streak
       this.updateStreak(data);
-      
       data.lastUpdated = new Date();
       this.saveData(data);
     }
@@ -176,6 +181,57 @@ export class StorageManager {
     this.saveData(data);
   }
 
+  static runBadHabitSettlement(data: AppData): void {
+    if (typeof window === 'undefined') return;
+    const credits = data.badHabitCredits ?? [];
+    const badHabits = data.habits.filter((h) => h.isBadHabit);
+    if (badHabits.length === 0) return;
+
+    const now = new Date();
+    const todayKey = this.toDateKey(now);
+    let changed = false;
+
+    for (let daysAgo = 1; daysAgo <= 30; daysAgo++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - daysAgo);
+      d.setHours(0, 0, 0, 0);
+      const dateKey = this.toDateKey(d);
+      if (dateKey >= todayKey) continue;
+
+      const startOfDay = new Date(d.getTime());
+      let endOfDay: Date;
+      const dayRecord = data.wakeSleepLog?.find((r) => r.date === dateKey);
+      if (dayRecord?.sleepTime) {
+        endOfDay = new Date(dayRecord.sleepTime);
+      } else {
+        endOfDay = new Date(d);
+        endOfDay.setHours(23, 59, 59, 999);
+      }
+
+      for (const habit of badHabits) {
+        const alreadyCredited = credits.some((c) => c.habitId === habit.id && c.date === dateKey);
+        if (alreadyCredited) continue;
+
+        const hasCompletionInWindow = habit.completions.some((c) => {
+          const t = new Date(c.completedAt).getTime();
+          return t >= startOfDay.getTime() && t <= endOfDay.getTime();
+        });
+        if (hasCompletionInWindow) continue;
+
+        data.stats.totalXP += habit.xpReward;
+        credits.push({ habitId: habit.id, date: dateKey });
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      data.badHabitCredits = credits;
+      data.stats.league = this.calculateLeague(data.stats.totalXP);
+      data.lastUpdated = new Date();
+      this.saveData(data);
+    }
+  }
+
   static getHabitCompletion(habitId: string): HabitCompletion | null {
     const data = this.getData();
     const habit = data.habits.find(h => h.id === habitId);
@@ -203,7 +259,7 @@ export class StorageManager {
     let currentStreak = 0;
     let lastDate: Date | null = null;
 
-    data.habits.forEach(habit => {
+    data.habits.filter((h) => !h.isBadHabit).forEach(habit => {
       const sortedCompletions = [...habit.completions].sort(
         (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
       );

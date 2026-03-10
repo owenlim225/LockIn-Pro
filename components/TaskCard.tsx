@@ -124,10 +124,15 @@ export function TaskCard({
 
           {/* Task Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className={`text-lg font-bold transition-opacity ${isCompleted ? 'opacity-60' : ''}`}>
                 {habit.title}
               </h3>
+              {habit.isBadHabit && (
+                <span className="text-xs font-medium text-muted-foreground rounded-full bg-muted px-2 py-0.5">
+                  Avoid
+                </span>
+              )}
               {onToggleStar && (
                 <Button
                   type="button"
@@ -162,8 +167,8 @@ export function TaskCard({
             {/* Completion Details */}
             {isCompleted && todayCompletion && (
               <div className="mt-2 flex items-center gap-2 text-sm">
-                <span className="font-semibold text-secondary">
-                  +{todayCompletion.xpEarned} XP
+                <span className={`font-semibold ${habit.isBadHabit ? 'text-destructive' : 'text-secondary'}`}>
+                  {habit.isBadHabit ? '' : '+'}{todayCompletion.xpEarned} XP
                 </span>
                 <span className="text-foreground/50">
                   {todayCompletion.completedAt.toLocaleTimeString('en-US', {
@@ -213,8 +218,8 @@ export function TaskCard({
             </div>
           )}
           {/* XP Badge */}
-          <div className="flex-shrink-0 bg-primary rounded-full px-3 py-1 font-bold text-foreground text-sm">
-            +{habit.xpReward}
+          <div className={`flex-shrink-0 rounded-full px-3 py-1 font-bold text-sm ${habit.isBadHabit ? 'bg-destructive/20 text-destructive' : 'bg-primary text-foreground'}`}>
+            {habit.isBadHabit ? '-' : '+'}{habit.xpReward}
           </div>
         </div>
 
@@ -233,7 +238,7 @@ export function TaskCard({
               onClick={handleCompleteClick}
               className="flex-1 rounded-xl font-semibold transition-all active:scale-[0.98]"
             >
-              Mark Done
+              {habit.isBadHabit ? 'I did it' : 'Mark Done'}
             </Button>
           </div>
         )}

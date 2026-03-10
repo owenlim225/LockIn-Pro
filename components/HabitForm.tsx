@@ -13,6 +13,8 @@ interface HabitFormProps {
   onSubmit: (habit: Habit) => void;
   onCancel: () => void;
   initialHabit?: Habit;
+  /** When true, form opens with "Bad habit" checked (e.g. when adding from bad-habit mode). */
+  defaultBadHabit?: boolean;
 }
 
 const ICON_OPTIONS = ['running', 'meditation', 'reading', 'water', 'sleep', 'exercise', 'coding', 'cooking'];
@@ -29,7 +31,7 @@ function fromDateTimeLocal(s: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) {
+export function HabitForm({ onSubmit, onCancel, initialHabit, defaultBadHabit }: HabitFormProps) {
   const [title, setTitle] = useState(initialHabit?.title || '');
   const [description, setDescription] = useState(initialHabit?.description || '');
   const [xpReward, setXpReward] = useState(initialHabit?.xpReward || 10);
@@ -37,6 +39,7 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
   const [icon, setIcon] = useState(initialHabit?.icon || 'default');
   const [color, setColor] = useState(initialHabit?.color || COLORS[0]);
   const [isStarred, setIsStarred] = useState(initialHabit?.isStarred ?? false);
+  const [isBadHabit, setIsBadHabit] = useState(initialHabit?.isBadHabit ?? defaultBadHabit ?? false);
   const [reminderAt, setReminderAt] = useState<string>(initialHabit?.reminderAt ? toDateTimeLocal(new Date(initialHabit.reminderAt)) : '');
   const [dueDate, setDueDate] = useState<string>(initialHabit?.dueDate ? toDateTimeLocal(new Date(initialHabit.dueDate)) : '');
   const [customDueDateTime, setCustomDueDateTime] = useState<string>(initialHabit?.customDueDateTime ? toDateTimeLocal(new Date(initialHabit.customDueDateTime)) : '');
@@ -78,6 +81,7 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
       reminderAt: fromDateTimeLocal(reminderAt),
       dueDate: fromDateTimeLocal(dueDate),
       customDueDateTime: recurrence === 'custom' ? fromDateTimeLocal(customDueDateTime) : null,
+      isBadHabit,
     };
 
     onSubmit(habit);
@@ -116,7 +120,20 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
         </div>
 
         <div>
-          <Label className="text-sm font-semibold mb-2 block">XP Reward: {xpReward}</Label>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <Label className="text-sm font-semibold">
+              {isBadHabit ? `XP Deduction: ${xpReward}` : `XP Reward: ${xpReward}`}
+            </Label>
+            <label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={isBadHabit}
+                onChange={(e) => setIsBadHabit(e.target.checked)}
+                className="rounded border-primary"
+              />
+              Bad habit (avoid completing)
+            </label>
+          </div>
           <input
             type="range"
             min="5"
@@ -126,7 +143,11 @@ export function HabitForm({ onSubmit, onCancel, initialHabit }: HabitFormProps) 
             onChange={(e) => setXpReward(parseInt(e.target.value))}
             className="w-full accent-secondary"
           />
-          <p className="text-xs text-muted-foreground mt-1">Higher rewards for harder habits</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isBadHabit
+              ? 'Deducted if you complete this habit; credited if you don\'t by end of day.'
+              : 'Higher rewards for harder habits'}
+          </p>
         </div>
 
         <div>

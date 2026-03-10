@@ -14,6 +14,8 @@ export interface Habit {
   reminderAt?: Date | null;
   dueDate?: Date | null;
   customDueDateTime?: Date | null;
+  /** When true, completing deducts XP; not completing by end of day credits XP. */
+  isBadHabit?: boolean;
 }
 
 export interface HabitCompletion {
@@ -56,4 +58,6 @@ export interface AppData {
   wakeSleepLog: WakeSleepRecord[];
   /** Optional order of habit ids for dashboard list. When set, list is sorted by this order. */
   habitOrder?: string[];
+  /** Tracks bad-habit follow-through credits already applied (habitId + date) to avoid double-credit. */
+  badHabitCredits?: { habitId: string; date: string }[];
 }
