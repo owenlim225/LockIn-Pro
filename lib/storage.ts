@@ -108,6 +108,15 @@ export class StorageManager {
     this.saveData(data);
   }
 
+  static deleteAllHabits(): void {
+    if (typeof window === 'undefined') return;
+    const data = this.getData();
+    data.habits = [];
+    data.stats = { ...DEFAULT_STATS, habitCount: 0 };
+    data.lastUpdated = new Date();
+    this.saveData(data);
+  }
+
   static addCompletion(habitId: string, completion: HabitCompletion): void {
     const data = this.getData();
     const habit = data.habits.find(h => h.id === habitId);

@@ -36,6 +36,7 @@ export default function Home() {
   const [showSleepModal, setShowSleepModal] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [filterHideAccomplished, setFilterHideAccomplished] = useState(false);
   const [filterPriorityOrder, setFilterPriorityOrder] = useState(false);
   const [filterMissedOnly, setFilterMissedOnly] = useState(false);
@@ -755,6 +756,14 @@ export default function Home() {
           >
             Reset all progress
           </button>
+
+          <button
+            type="button"
+            onClick={() => setShowDeleteAllModal(true)}
+            className="w-full py-4 rounded-3xl border-2 border-destructive/50 bg-white shadow-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            Delete all habits
+          </button>
         </div>
 
         {/* Reset progress confirmation modal */}
@@ -783,6 +792,39 @@ export default function Home() {
                   className="flex-1 py-3 rounded-xl font-semibold bg-destructive text-white hover:bg-destructive/90 transition-colors"
                 >
                   Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete all habits confirmation modal */}
+        {showDeleteAllModal && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-background rounded-3xl w-full max-w-sm p-6 shadow-lg border-2 border-destructive/20">
+              <h2 className="text-lg font-bold text-foreground">Delete all habits?</h2>
+              <p className="mt-3 text-sm text-foreground/80">
+                This will remove every habit and all their completions. Your XP, streaks, and league will be reset. This cannot be undone.
+              </p>
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteAllModal(false)}
+                  className="flex-1 py-3 rounded-xl font-semibold bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    StorageManager.deleteAllHabits();
+                    setAppData(StorageManager.getData());
+                    setSelectedHabit(null);
+                    setShowDeleteAllModal(false);
+                  }}
+                  className="flex-1 py-3 rounded-xl font-semibold bg-destructive text-white hover:bg-destructive/90 transition-colors"
+                >
+                  Delete all
                 </button>
               </div>
             </div>
